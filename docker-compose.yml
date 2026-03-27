@@ -1,0 +1,17 @@
+services:
+  app:
+    container_name: ${COMPOSE_PROJECT_NAME:-playground}-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      TZ: ${TZ:-UTC}
+      APP_START_COMMAND: ${APP_START_COMMAND:-}
+    ports:
+      - "${HOST_PORT:-3000}:${CONTAINER_PORT:-3000}"
+    volumes:
+      # Keep the repository mounted so the placeholder container can run future app code in place.
+      - .:/app
