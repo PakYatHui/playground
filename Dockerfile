@@ -1,11 +1,32 @@
-FROM alpine:3.20
+FROM node:22-alpine AS deps
 
 WORKDIR /app
 
-# Minimal runtime dependencies for a generic containerized app entrypoint.
-RUN apk add --no-cache bash curl
+COPY package.json package-lock.json ./
+RUN npm ci
 
-COPY . /app
+FROM node:22-alpine AS builder
 
-# The actual app start command is supplied via APP_START_COMMAND in .env.
-CMD sh -c "${APP_START_COMMAND:-echo 'APP_START_COMMAND is not set. Update .env before deploying.' && tail -f /dev/null}"
+WORKDIR /app
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+RUN npm run build
+
+FROM node:22-alpine AS runner
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV PORT=3000
+
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/next.config.ts ./next.config.ts
+
+EXPOSE 3000
+
+CMD ["npm", "run", "start"]

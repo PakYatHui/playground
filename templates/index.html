@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{title}}</title>
+    <link rel="stylesheet" href="/static/app.css" />
+  </head>
+  <body data-poll-interval-ms="{{poll_interval_ms}}">
+    <main class="dashboard">
+      <section class="hero">
+        <p class="eyebrow">v0.3 local agent office</p>
+        <h1>Agent Workstations</h1>
+        <p class="intro">
+          A local board for checking what each AI is doing, whether it is
+          actively working, what result it produced, and its recent history.
+        </p>
+        <div class="legend">
+          <span class="legend-item idle">Idle</span>
+          <span class="legend-item planning">Planning</span>
+          <span class="legend-item coding">Coding</span>
+          <span class="legend-item reviewing">Reviewing</span>
+        </div>
+      </section>
+
+      <section class="status-bar">
+        <div>
+          <strong id="office-name">Local Agent Office</strong>
+          <span id="office-subtitle">Loading state...</span>
+        </div>
+        <div class="meta">
+          <span id="last-updated">Waiting for state</span>
+          <button id="refresh-button" type="button">Refresh</button>
+        </div>
+      </section>
+
+      <section class="overview-grid">
+        <article class="overview-card">
+          <span class="overview-label">Active now</span>
+          <strong id="working-count">0 agents</strong>
+          <p id="working-summary">Waiting for state.</p>
+        </article>
+        <article class="overview-card">
+          <span class="overview-label">Latest result</span>
+          <strong id="latest-result-agent">No agent yet</strong>
+          <p id="latest-result-text">Result feed is loading.</p>
+        </article>
+        <article class="overview-card">
+          <span class="overview-label">Watch list</span>
+          <strong>manager / job / local-smoke</strong>
+          <p>Each workstation keeps one current task and up to eight history entries.</p>
+        </article>
+      </section>
+
+      <section class="workstations" aria-label="Agent workstations">
+        <div id="workstation-list" class="workstation-grid"></div>
+      </section>
+
+      <section class="agent-table">
+        <h2>Quick Board</h2>
+        <div id="agent-summary" class="summary-grid"></div>
+      </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>

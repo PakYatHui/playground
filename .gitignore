@@ -1,0 +1,14 @@
+.env
+.env.local
+.env.*.local
+node_modules/
+.next/
+out/
+dist/
+npm-debug.log*
+.playwright-cli/
+output/
+__pycache__/
+tests/__pycache__/
+*.pyc
+state.json
