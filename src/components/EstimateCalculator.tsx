@@ -55,7 +55,7 @@ export function EstimateCalculator() {
                 <p className="text-sm font-medium uppercase tracking-[0.28em] text-slate-500">Products</p>
                 <h3 className="mt-3 text-3xl font-semibold text-ink">后台可识别的产品层</h3>
               </div>
-              <ConsultationButton href="/ops" label="打开录单页" />
+              <ConsultationButton href="/quote" label="打开报价页" />
             </div>
 
             <div className="mt-6 space-y-3">

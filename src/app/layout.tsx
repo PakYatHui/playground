@@ -1,15 +1,18 @@
 import type { Metadata } from "next";
 
 import { SiteShell } from "@/components/site-shell";
+import { siteMeta } from "@/data/siteContent";
 
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Melbourne Quote Kit",
-  description: "Next.js project scaffold for quote workflow, public pages, and future lightweight backend expansion.",
+  title: siteMeta.title,
+  description: siteMeta.description,
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="zh-CN">
       <body>

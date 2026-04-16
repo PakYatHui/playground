@@ -13,15 +13,18 @@ export function HeroSection() {
           <div className="space-y-6">
             <h1 className="max-w-4xl text-5xl font-semibold leading-tight tracking-tight text-ink sm:text-6xl">
               墨尔本地陪
-              <span className="block text-gold">已经可运行的录单与报价工具</span>
+              <span className="block text-gold">
+                已经可运行的录单与报价工具
+              </span>
             </h1>
             <p className="max-w-2xl text-lg leading-8 text-slate-600">
               {siteMeta.brandName}
-              当前不是只做展示，而是把“前台少量产品展示 + 后台录单 + 成本核算 + 报价判断”真正接成一套能直接使用的业务工具。
+              当前不是只做展示，而是把“前台少量产品展示 + 预估报价 + 联系留资 +
+              基础记录查看”真正接成一个能跑通的轻量闭环。
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">
-            <ConsultationButton href="/ops" label="进入后台录单" />
+            <ConsultationButton href="/quote" label="立即预估报价" />
             <a
               href="#services"
               className="inline-flex items-center justify-center rounded-full border border-slate-300 px-5 py-3 text-sm font-medium text-slate-700 transition hover:border-slate-500 hover:text-ink"
@@ -31,7 +34,10 @@ export function HeroSection() {
           </div>
           <ul className="grid gap-3 text-sm text-slate-600 sm:grid-cols-3">
             {heroHighlights.map((item) => (
-              <li key={item} className="rounded-2xl border border-white/80 bg-white/70 px-4 py-4 shadow-panel backdrop-blur">
+              <li
+                key={item}
+                className="rounded-2xl border border-white/80 bg-white/70 px-4 py-4 shadow-panel backdrop-blur"
+              >
                 {item}
               </li>
             ))}
@@ -41,24 +47,34 @@ export function HeroSection() {
           <div className="space-y-5 rounded-[1.5rem] bg-[#f4efe6] p-6">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm uppercase tracking-[0.22em] text-slate-500">Prototype Focus</p>
-                <h2 className="mt-2 text-2xl font-semibold text-ink">不是旅游陪玩，而是可执行的业务录单系统</h2>
+                <p className="text-sm uppercase tracking-[0.22em] text-slate-500">
+                  Prototype Focus
+                </p>
+                <h2 className="mt-2 text-2xl font-semibold text-ink">
+                  不是旅游陪玩，而是有最小转化闭环的服务站点
+                </h2>
               </div>
-              <div className="rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-500">V1</div>
+              <div className="rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-500">
+                V1
+              </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="rounded-2xl bg-white p-4">
                 <p className="text-sm text-slate-500">前台用途</p>
-                <p className="mt-2 text-lg font-medium text-ink">标准产品展示</p>
+                <p className="mt-2 text-lg font-medium text-ink">
+                  服务展示 + 询价预估
+                </p>
               </div>
               <div className="rounded-2xl bg-white p-4">
-                <p className="text-sm text-slate-500">后台用途</p>
-                <p className="mt-2 text-lg font-medium text-ink">录单 + 报价判断</p>
+                <p className="text-sm text-slate-500">留资用途</p>
+                <p className="mt-2 text-lg font-medium text-ink">
+                  收集询价与联系记录
+                </p>
               </div>
               <div className="rounded-2xl bg-white p-4 sm:col-span-2">
-                <p className="text-sm text-slate-500">当前站点状态</p>
+                <p className="text-sm text-slate-500">当前段一状态</p>
                 <p className="mt-2 text-lg font-medium leading-8 text-ink">
-                  首页展示四类标准产品，后台录单页则会判断是基础版、入住协助版、半日陪同版还是一日定制版，并同步给出标准、升级、定制或拒单结论。
+                  首页展示四类标准产品，报价页会输出预估报价区间，联系页可以提交留资，管理页则提供本地记录查看入口。
                 </p>
               </div>
             </div>

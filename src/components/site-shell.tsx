@@ -16,11 +16,14 @@ export function SiteShell({ children }: { children: ReactNode }) {
       <header className="border-b border-black/10 bg-white/70 backdrop-blur">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-5 py-4 sm:px-8 lg:px-10">
           <div className="flex items-center justify-between gap-4">
-            <Link href="/" className="text-sm font-semibold uppercase tracking-[0.28em] text-stone-800">
-              Melbourne Quote Kit
+            <Link
+              href="/"
+              className="text-sm font-semibold uppercase tracking-[0.28em] text-stone-800"
+            >
+              Melbourne Arrival Concierge
             </Link>
             <span className="rounded-full border border-amber-800/15 bg-amber-50 px-3 py-1 text-xs text-amber-900">
-              Stage 1 Scaffold
+              Stage 1
             </span>
           </div>
           <nav className="flex flex-wrap gap-2 text-sm text-stone-600">
@@ -37,19 +40,25 @@ export function SiteShell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main className="mx-auto flex w-full max-w-6xl flex-1 px-5 py-10 sm:px-8 lg:px-10">{children}</main>
+      <main className="mx-auto flex w-full max-w-6xl flex-1 px-5 py-10 sm:px-8 lg:px-10">
+        {children}
+      </main>
 
       <footer className="border-t border-black/10 bg-white/60">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-5 py-6 text-sm text-stone-600 sm:px-8 lg:px-10">
           <div className="flex flex-wrap gap-4">
             {navigationItems.map((item) => (
-              <Link key={item.href} href={item.href} className="hover:text-stone-900">
+              <Link
+                key={item.href}
+                href={item.href}
+                className="hover:text-stone-900"
+              >
                 {item.label}
               </Link>
             ))}
           </div>
           <p className="m-0">
-            当前页面用于服务说明与询价收集。页面展示内容和系统判断仅作为初步沟通依据，是否承接与最终报价仍以人工确认后的实际安排为准。
+            当前页面用于服务说明、预估报价与留资收集。页面展示内容和系统判断仅作为初步沟通依据，是否承接与最终报价仍以人工确认后的实际安排为准。
           </p>
         </div>
       </footer>
