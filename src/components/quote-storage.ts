@@ -8,7 +8,10 @@ export type SavedQuoteRequest = {
   submittedAt: string;
   customerName: string;
   contactMethod: string;
+  serviceOption?: string;
   tripIntent: string;
+  ruleVersion?: string;
+  productId?: string;
   serviceDate: string;
   startTime: string;
   estimatedRangeLabel: string;
@@ -86,7 +89,10 @@ function normalizeSavedQuoteRequest(input: unknown): SavedQuoteRequest | null {
     submittedAt: submittedAt || new Date().toISOString(),
     customerName: maskName(item.customerName),
     contactMethod: maskContact(item.contactMethod),
+    serviceOption: sanitizeText(item.serviceOption, 40) || "待确认",
     tripIntent: sanitizeText(item.tripIntent, 40) || "待确认",
+    ruleVersion: sanitizeText(item.ruleVersion, 40) || "待确认",
+    productId: sanitizeText(item.productId, 40) || "待确认",
     serviceDate: sanitizeText(item.serviceDate, 40) || "待确认",
     startTime: sanitizeText(item.startTime, 16) || "待确认",
     estimatedRangeLabel: sanitizeText(item.estimatedRangeLabel, 80) || "待确认",
