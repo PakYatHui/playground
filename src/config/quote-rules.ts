@@ -22,7 +22,7 @@ type ServiceProfile = {
 };
 
 export const quoteRules = {
-  ruleVersion: "2026-04-17-stage2-steps1-3",
+  ruleVersion: "2026-04-17-stage2-steps4-6",
   currency: "AUD",
   reviewMode: "manual",
   serviceArea: "Melbourne",

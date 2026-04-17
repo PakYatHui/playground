@@ -5,6 +5,10 @@ import {
   validateQuoteInput,
   type QuoteFormInput,
 } from "../src/lib/quote-engine";
+import {
+  buildCopyableQuoteSummary,
+  buildQuoteResultCard,
+} from "../src/lib/quote-presenter";
 
 function createValidInput(
   overrides: Partial<QuoteFormInput> = {},
@@ -249,6 +253,26 @@ describe("runQuoteEngine", () => {
     expect(result.normalized_inputs).toHaveProperty("service_option");
     expect(result.validation).toHaveProperty("is_valid");
   });
+
+  it("keeps a visible regression matrix for quote outputs", () => {
+    const regressionMatrix = engineCases.map(({ name, input }) => {
+      const result = runQuoteEngine(input);
+      const card = buildQuoteResultCard(input, result);
+
+      return {
+        name,
+        product_id: result.product_id,
+        eligibility: result.eligibility.status,
+        price_range: result.price_range.label,
+        explain_title: result.public_explain.title,
+        explain_summary: result.public_explain.summary,
+        bullets: result.public_explain.bullets,
+        card,
+      };
+    });
+
+    expect(regressionMatrix).toMatchSnapshot();
+  });
 });
 
 describe("validateQuoteInput", () => {
@@ -257,5 +281,32 @@ describe("validateQuoteInput", () => {
 
     expect(result.is_valid).toBe(false);
     expect(result.internal_debug.issue_codes).toContain(code);
+  });
+});
+
+describe("buildCopyableQuoteSummary", () => {
+  it("keeps the summary short enough for chat apps", () => {
+    const result = runQuoteEngine(createValidInput());
+    const summary = buildCopyableQuoteSummary(createValidInput(), result);
+
+    expect(summary.length).toBeLessThanOrEqual(280);
+  });
+
+  it("does not leak internal pricing fields", () => {
+    const input = createValidInput({
+      routeScope: "outer",
+      estimatedServiceMinutes: 150,
+      extraStopCount: 1,
+      errandCount: 1,
+      taskSummary: "接机后跨区送达并熟悉周边。",
+    });
+    const result = runQuoteEngine(input);
+    const summary = buildCopyableQuoteSummary(input, result);
+
+    expect(summary).not.toContain("buffer");
+    expect(summary).not.toContain("minimum_safe_quote_aud");
+    expect(summary).not.toContain("recommended_quote_aud");
+    expect(summary).not.toContain("product_id");
+    expect(summary).not.toContain("rule_version");
   });
 });

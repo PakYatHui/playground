@@ -16,6 +16,11 @@ import {
   type QuoteFieldName,
   type QuoteFormInput,
 } from "@/src/lib/quote-engine";
+import {
+  buildCopyableQuoteSummary,
+  buildQuoteResultCard,
+  getQuoteRangeLabel,
+} from "@/src/lib/quote-presenter";
 
 import { saveQuoteRequest } from "./quote-storage";
 
@@ -70,16 +75,6 @@ const STEP_TITLES = [
   },
 ];
 
-function formatMoneyRange(minimum: number, maximum: number) {
-  const formatter = new Intl.NumberFormat("en-AU", {
-    style: "currency",
-    currency: "AUD",
-    maximumFractionDigits: 0,
-  });
-
-  return `${formatter.format(minimum)} - ${formatter.format(maximum)}`;
-}
-
 function getFirstFieldForStep(stepIndex: number, invalidFields: QuoteFieldName[]) {
   return STEP_FIELDS[stepIndex].find((field) => invalidFields.includes(field));
 }
@@ -105,9 +100,20 @@ export function QuoteRequestForm() {
     label: string;
     savedAt: string;
   }>(null);
+  const [copyFeedback, setCopyFeedback] = useState<"idle" | "copied" | "failed">(
+    "idle",
+  );
 
   const validation = useMemo(() => validateQuoteInput(form), [form]);
   const engineResult = useMemo(() => runQuoteEngine(form), [form]);
+  const resultCard = useMemo(
+    () => buildQuoteResultCard(form, engineResult),
+    [engineResult, form],
+  );
+  const copyableSummary = useMemo(
+    () => buildCopyableQuoteSummary(form, engineResult),
+    [engineResult, form],
+  );
 
   const fieldErrors = useMemo(() => {
     return validation.field_errors.reduce<Record<string, string>>((acc, issue) => {
@@ -127,9 +133,10 @@ export function QuoteRequestForm() {
     key: Key,
     value: QuoteFormInput[Key],
   ) {
-    setSubmitted(null);
-    setForm((current) => {
-      const next = {
+      setSubmitted(null);
+      setCopyFeedback("idle");
+      setForm((current) => {
+        const next = {
         ...current,
         [key]: value,
       };
@@ -191,13 +198,7 @@ export function QuoteRequestForm() {
 
     const savedAt = new Date().toISOString();
     const serviceLabel = getServiceProfile(form.serviceOption).label;
-    const estimateLabel =
-      engineResult.price_range.minimum_aud > 0
-        ? formatMoneyRange(
-            engineResult.price_range.minimum_aud,
-            engineResult.price_range.maximum_aud,
-          )
-        : engineResult.price_range.label;
+    const estimateLabel = getQuoteRangeLabel(engineResult);
 
     saveQuoteRequest({
       id: crypto.randomUUID(),
@@ -218,6 +219,38 @@ export function QuoteRequestForm() {
       label: estimateLabel,
       savedAt,
     });
+  }
+
+  async function copySummary() {
+    const value = buildCopyableQuoteSummary(form, engineResult);
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(value);
+        setCopyFeedback("copied");
+        window.setTimeout(() => setCopyFeedback("idle"), 1800);
+        return;
+      }
+    } catch {
+      // Fall through to the legacy copy path.
+    }
+
+    const textarea = document.createElement("textarea");
+    textarea.value = value;
+    textarea.setAttribute("readonly", "true");
+    textarea.style.position = "fixed";
+    textarea.style.top = "0";
+    textarea.style.left = "-9999px";
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    textarea.setSelectionRange(0, textarea.value.length);
+
+    const copied = document.execCommand("copy");
+    document.body.removeChild(textarea);
+
+    setCopyFeedback(copied ? "copied" : "failed");
+    window.setTimeout(() => setCopyFeedback("idle"), 1800);
   }
 
   const stepMeta = STEP_TITLES[currentStep];
@@ -628,77 +661,80 @@ export function QuoteRequestForm() {
       <aside className="space-y-6">
         <section className="rounded-[2rem] bg-[#f4efe6] p-6 shadow-panel sm:p-8">
           <p className="text-sm font-medium uppercase tracking-[0.28em] text-gold">
-            Live Estimate
+            Quote Result
           </p>
-          <h2 className="mt-3 text-3xl font-semibold text-ink">当前预估结果</h2>
+          <h2 className="mt-3 text-3xl font-semibold text-ink">当前预估结果卡片</h2>
           <p className="mt-3 text-sm leading-7 text-slate-600">
-            价格与解释都来自 `quote-engine`，页面本身不持有价格规则。
+            页面展示只面向客户沟通，不暴露内部阈值、底线和成本拆解。
           </p>
 
           <div className="mt-6 rounded-[1.5rem] bg-white p-5">
-            <p className="text-sm text-slate-500">产品识别</p>
+            <p className="text-sm text-slate-500">产品类别</p>
             <p className="mt-2 text-2xl font-semibold text-ink">
-              {getServiceProfile(form.serviceOption).label}
-            </p>
-            <p className="mt-2 text-sm leading-7 text-slate-600">
-              输出产品 ID：{engineResult.product_id}
+              {resultCard.serviceCategory}
             </p>
           </div>
 
           <div className="mt-4 rounded-[1.5rem] bg-white p-5">
             <p className="text-sm text-slate-500">预估区间</p>
-            <p className="mt-2 text-2xl font-semibold text-ink">
-              {engineResult.validation.is_valid &&
-              engineResult.price_range.minimum_aud > 0
-                ? formatMoneyRange(
-                    engineResult.price_range.minimum_aud,
-                    engineResult.price_range.maximum_aud,
-                  )
-                : engineResult.price_range.label}
-            </p>
+            <p className="mt-2 text-2xl font-semibold text-ink">{resultCard.quoteRange}</p>
             <p className="mt-3 text-sm leading-7 text-slate-600">
               {engineResult.public_explain.summary}
             </p>
           </div>
 
           <div className="mt-4 rounded-[1.5rem] bg-white p-5 text-sm leading-7 text-slate-600">
-            <p className="m-0 font-medium text-ink">公开解释</p>
+            <p className="m-0 font-medium text-ink">基本包含项</p>
             <ul className="mb-0 mt-3 space-y-2 pl-5">
-              {engineResult.public_explain.bullets.map((bullet) => (
-                <li key={bullet}>{bullet}</li>
+              {resultCard.includedItems.map((item) => (
+                <li key={item}>{item}</li>
               ))}
             </ul>
           </div>
-        </section>
 
-        <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-panel sm:p-8">
-          <p className="text-sm font-medium uppercase tracking-[0.28em] text-slate-500">
-            Normalized Output
-          </p>
-          <h3 className="mt-3 text-2xl font-semibold text-ink">
-            固定输出结构已准备好
-          </h3>
-          <div className="mt-5 space-y-3 text-sm leading-7 text-slate-600">
-            <p>
-              `product_id`：{engineResult.product_id}
-            </p>
-            <p>
-              `rule_version`：{engineResult.rule_version}
-            </p>
-            <p>
-              `price_range`：{engineResult.price_range.label}
-            </p>
-            <p>
-              `normalized_inputs`：已统一为可保存结构，不再由页面自行拼装价格参数。
-            </p>
-            <p>
-              `eligibility`：{engineResult.eligibility.public_reason}
-            </p>
+          <div className="mt-4 rounded-[1.5rem] bg-white p-5 text-sm leading-7 text-slate-600">
+            <p className="m-0 font-medium text-ink">可能影响最终报价的因素</p>
+            <ul className="mb-0 mt-3 space-y-2 pl-5">
+              {resultCard.finalPriceFactors.map((factor) => (
+                <li key={factor}>{factor}</li>
+              ))}
+            </ul>
           </div>
 
           <div className="mt-6 rounded-[1.5rem] bg-[#faf7f2] p-5 text-sm leading-7 text-slate-600">
-            <p className="m-0 font-medium text-ink">提示</p>
+            <p className="m-0 font-medium text-ink">人工确认提示</p>
+            <p className="mb-0 mt-2">{resultCard.manualReviewHint}</p>
             <p className="mb-0 mt-2">{quoteDisclaimer}</p>
+          </div>
+
+          <div className="mt-4 rounded-[1.5rem] bg-white p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="m-0 text-sm font-medium text-ink">可复制摘要</p>
+                <p className="mt-2 text-sm leading-7 text-slate-600">
+                  适合直接发微信或 WhatsApp，不包含内部规则参数。
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={copySummary}
+                className="inline-flex items-center justify-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-500 hover:text-ink"
+              >
+                {copyFeedback === "copied"
+                  ? "已复制"
+                  : copyFeedback === "failed"
+                    ? "复制失败"
+                    : "一键复制"}
+              </button>
+            </div>
+            <textarea
+              readOnly
+              value={copyableSummary}
+              className="mt-4 min-h-36 w-full rounded-[1.25rem] border border-slate-200 bg-[#faf7f2] px-4 py-3 text-sm leading-7 text-slate-700 outline-none"
+            />
+            <p className="mb-0 mt-3 text-xs leading-6 text-slate-500">
+              当前规则版本：{engineResult.rule_version}
+            </p>
           </div>
         </section>
       </aside>

@@ -1,0 +1,316 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`runQuoteEngine > keeps a visible regression matrix for quote outputs 1`] = `
+[
+  {
+    "bullets": [
+      "当前按墨尔本核心区 / 机场主线路口径估算。",
+      "当前区间已经包含升级因素，不会按基础场景直接硬算。",
+    ],
+    "card": {
+      "finalPriceFactors": [
+        "最终仍会根据路线与当天时间安排人工确认",
+      ],
+      "includedItems": [
+        "机场接送主线路安排",
+        "基础沟通与路线时间人工复核",
+      ],
+      "manualReviewHint": "当前可先参考预估区间，最终仍需人工确认路线、时间与现场情况。",
+      "quoteRange": "$90 - $150",
+      "serviceCategory": "机场接送",
+    },
+    "eligibility": "eligible",
+    "explain_summary": "机场接送 当前命中升级报价口径，页面展示的是预估区间，不是最终价。",
+    "explain_title": "已生成预估区间",
+    "name": "standard airport transfer",
+    "price_range": "AUD 90 - 150",
+    "product_id": "airport-basic",
+  },
+  {
+    "bullets": [
+      "当前按墨尔本核心区 / 机场主线路口径估算。",
+      "当前已按机场接送叠加入住协助的简洁场景估算。",
+      "当前区间已经包含升级因素，不会按基础场景直接硬算。",
+    ],
+    "card": {
+      "finalPriceFactors": [
+        "最终仍会根据路线与当天时间安排人工确认",
+      ],
+      "includedItems": [
+        "机场接送与基础入住衔接",
+        "基础沟通与路线时间人工复核",
+      ],
+      "manualReviewHint": "当前可先参考预估区间，最终仍需人工确认路线、时间与现场情况。",
+      "quoteRange": "$160 - $245",
+      "serviceCategory": "机场 + 入住协助",
+    },
+    "eligibility": "eligible",
+    "explain_summary": "机场 + 入住协助 当前命中升级报价口径，页面展示的是预估区间，不是最终价。",
+    "explain_title": "已生成预估区间",
+    "name": "airport plus stay upgrade",
+    "price_range": "AUD 160 - 245",
+    "product_id": "airport-plus-stay",
+  },
+  {
+    "bullets": [
+      "当前按墨尔本核心区 / 机场主线路口径估算。",
+    ],
+    "card": {
+      "finalPriceFactors": [
+        "最终仍会根据路线与当天时间安排人工确认",
+      ],
+      "includedItems": [
+        "半日内集中陪同安排",
+        "基础沟通与路线时间人工复核",
+      ],
+      "manualReviewHint": "当前可先参考预估区间，最终仍需人工确认路线、时间与现场情况。",
+      "quoteRange": "$170 - $280",
+      "serviceCategory": "半日陪同",
+    },
+    "eligibility": "eligible",
+    "explain_summary": "半日陪同 当前可按标准口径给出预估区间。",
+    "explain_title": "已生成预估区间",
+    "name": "half day standard",
+    "price_range": "AUD 170 - 280",
+    "product_id": "half-day-companion",
+  },
+  {
+    "bullets": [
+      "路线包含核心区外或跨区，价格会比核心区主线路更高。",
+      "已计入 2 个额外停靠点和 2 项附加事项。",
+      "安排较满或事项较多，最终仍需人工确认路线和时间。",
+    ],
+    "card": {
+      "finalPriceFactors": [
+        "事项组合较复杂，需要人工确认",
+        "路线涉及核心区外或跨区",
+        "最终仍会根据路线与当天时间安排人工确认",
+      ],
+      "includedItems": [
+        "半日内集中陪同安排",
+        "基础沟通与路线时间人工复核",
+        "2 个额外停靠点的预估占用",
+        "2 项附加事项的预估占用",
+      ],
+      "manualReviewHint": "当前结果已进入人工确认口径，建议直接加微信继续确认路线与时间。",
+      "quoteRange": "$355 - $585",
+      "serviceCategory": "半日陪同",
+    },
+    "eligibility": "manual_review",
+    "explain_summary": "半日陪同 已按复杂需求进入人工确认口径，页面先给出预估区间。",
+    "explain_title": "已生成预估区间，需人工确认",
+    "name": "half day escalates to custom on outer route",
+    "price_range": "AUD 355 - 585",
+    "product_id": "one-day-custom",
+  },
+  {
+    "bullets": [
+      "当前按墨尔本核心区 / 机场主线路口径估算。",
+      "已计入 2 个额外停靠点和 3 项附加事项。",
+      "安排较满或事项较多，最终仍需人工确认路线和时间。",
+    ],
+    "card": {
+      "finalPriceFactors": [
+        "事项组合较复杂，需要人工确认",
+        "最终仍会根据路线与当天时间安排人工确认",
+      ],
+      "includedItems": [
+        "一日内定制陪同安排",
+        "基础沟通与路线时间人工复核",
+        "2 个额外停靠点的预估占用",
+        "3 项附加事项的预估占用",
+      ],
+      "manualReviewHint": "当前结果已进入人工确认口径，建议直接加微信继续确认路线与时间。",
+      "quoteRange": "$350 - $580",
+      "serviceCategory": "一日定制",
+    },
+    "eligibility": "manual_review",
+    "explain_summary": "一日定制 已按复杂需求进入人工确认口径，页面先给出预估区间。",
+    "explain_title": "已生成预估区间，需人工确认",
+    "name": "full day remains custom",
+    "price_range": "AUD 350 - 580",
+    "product_id": "one-day-custom",
+  },
+  {
+    "bullets": [
+      "路线包含核心区外或跨区，价格会比核心区主线路更高。",
+      "已计入 1 个额外停靠点和 1 项附加事项。",
+      "安排较满或事项较多，最终仍需人工确认路线和时间。",
+    ],
+    "card": {
+      "finalPriceFactors": [
+        "事项组合较复杂，需要人工确认",
+        "路线涉及核心区外或跨区",
+        "最终仍会根据路线与当天时间安排人工确认",
+      ],
+      "includedItems": [
+        "机场接送主线路安排",
+        "基础沟通与路线时间人工复核",
+        "1 个额外停靠点的预估占用",
+        "1 项附加事项的预估占用",
+      ],
+      "manualReviewHint": "当前结果已进入人工确认口径，建议直接加微信继续确认路线与时间。",
+      "quoteRange": "$345 - $575",
+      "serviceCategory": "机场接送",
+    },
+    "eligibility": "manual_review",
+    "explain_summary": "机场接送 已按复杂需求进入人工确认口径，页面先给出预估区间。",
+    "explain_title": "已生成预估区间，需人工确认",
+    "name": "airport outer route escalates to custom",
+    "price_range": "AUD 345 - 575",
+    "product_id": "one-day-custom",
+  },
+  {
+    "bullets": [
+      "当前按墨尔本核心区 / 机场主线路口径估算。",
+      "已计入 2 个额外停靠点和 2 项附加事项。",
+      "安排较满或事项较多，最终仍需人工确认路线和时间。",
+    ],
+    "card": {
+      "finalPriceFactors": [
+        "事项组合较复杂，需要人工确认",
+        "最终仍会根据路线与当天时间安排人工确认",
+      ],
+      "includedItems": [
+        "机场接送主线路安排",
+        "基础沟通与路线时间人工复核",
+        "2 个额外停靠点的预估占用",
+        "2 项附加事项的预估占用",
+      ],
+      "manualReviewHint": "当前结果已进入人工确认口径，建议直接加微信继续确认路线与时间。",
+      "quoteRange": "$345 - $575",
+      "serviceCategory": "机场接送",
+    },
+    "eligibility": "manual_review",
+    "explain_summary": "机场接送 已按复杂需求进入人工确认口径，页面先给出预估区间。",
+    "explain_title": "已生成预估区间，需人工确认",
+    "name": "airport many errands escalates to custom",
+    "price_range": "AUD 345 - 575",
+    "product_id": "one-day-custom",
+  },
+  {
+    "bullets": [
+      "当前按墨尔本核心区 / 机场主线路口径估算。",
+      "安排较满或事项较多，最终仍需人工确认路线和时间。",
+    ],
+    "card": {
+      "finalPriceFactors": [
+        "事项组合较复杂，需要人工确认",
+        "最终仍会根据路线与当天时间安排人工确认",
+      ],
+      "includedItems": [
+        "机场接送主线路安排",
+        "基础沟通与路线时间人工复核",
+      ],
+      "manualReviewHint": "当前结果已进入人工确认口径，建议直接加微信继续确认路线与时间。",
+      "quoteRange": "$335 - $565",
+      "serviceCategory": "机场接送",
+    },
+    "eligibility": "manual_review",
+    "explain_summary": "机场接送 已按复杂需求进入人工确认口径，页面先给出预估区间。",
+    "explain_title": "已生成预估区间，需人工确认",
+    "name": "airport long duration escalates to custom",
+    "price_range": "AUD 335 - 565",
+    "product_id": "one-day-custom",
+  },
+  {
+    "bullets": [
+      "当前按墨尔本核心区 / 机场主线路口径估算。",
+      "当前区间已经包含升级因素，不会按基础场景直接硬算。",
+      "夜间时段会抬高预估区间，最终仍以人工确认结果为准。",
+    ],
+    "card": {
+      "finalPriceFactors": [
+        "时段偏晚或偏早",
+        "最终仍会根据路线与当天时间安排人工确认",
+      ],
+      "includedItems": [
+        "机场接送主线路安排",
+        "基础沟通与路线时间人工复核",
+      ],
+      "manualReviewHint": "当前可先参考预估区间，最终仍需人工确认路线、时间与现场情况。",
+      "quoteRange": "$90 - $150",
+      "serviceCategory": "机场接送",
+    },
+    "eligibility": "eligible",
+    "explain_summary": "机场接送 当前命中升级报价口径，页面展示的是预估区间，不是最终价。",
+    "explain_title": "已生成预估区间",
+    "name": "night level 1 keeps quote but with range",
+    "price_range": "AUD 90 - 150",
+    "product_id": "airport-basic",
+  },
+  {
+    "bullets": [
+      "当前按墨尔本核心区 / 机场主线路口径估算。",
+      "当前区间已经包含升级因素，不会按基础场景直接硬算。",
+      "夜间时段会抬高预估区间，最终仍以人工确认结果为准。",
+    ],
+    "card": {
+      "finalPriceFactors": [
+        "时段偏晚或偏早",
+        "最终仍会根据路线与当天时间安排人工确认",
+      ],
+      "includedItems": [
+        "机场接送主线路安排",
+        "基础沟通与路线时间人工复核",
+      ],
+      "manualReviewHint": "当前可先参考预估区间，最终仍需人工确认路线、时间与现场情况。",
+      "quoteRange": "$90 - $150",
+      "serviceCategory": "机场接送",
+    },
+    "eligibility": "eligible",
+    "explain_summary": "机场接送 当前命中升级报价口径，页面展示的是预估区间，不是最终价。",
+    "explain_title": "已生成预估区间",
+    "name": "night level 2 keeps quote but with range",
+    "price_range": "AUD 90 - 150",
+    "product_id": "airport-basic",
+  },
+  {
+    "bullets": [
+      "03:00-05:59 暂不提供线上快速预估，请直接微信联系确认。",
+    ],
+    "card": {
+      "finalPriceFactors": [
+        "时段偏晚或偏早",
+        "最终仍会根据路线与当天时间安排人工确认",
+      ],
+      "includedItems": [
+        "机场接送主线路安排",
+        "基础沟通与路线时间人工复核",
+      ],
+      "manualReviewHint": "当前可先参考预估区间，最终仍需人工确认路线、时间与现场情况。",
+      "quoteRange": "请先修正表单信息",
+      "serviceCategory": "机场接送",
+    },
+    "eligibility": "rejected",
+    "explain_summary": "03:00-05:59 暂不提供线上快速预估，请直接微信联系确认。",
+    "explain_title": "暂时不能直接提交",
+    "name": "invalid reject window blocks submission",
+    "price_range": "请先修正表单信息",
+    "product_id": "airport-basic",
+  },
+  {
+    "bullets": [
+      "当前按墨尔本核心区 / 机场主线路口径估算。",
+    ],
+    "card": {
+      "finalPriceFactors": [
+        "最终仍会根据路线与当天时间安排人工确认",
+      ],
+      "includedItems": [
+        "半日内集中陪同安排",
+        "基础沟通与路线时间人工复核",
+      ],
+      "manualReviewHint": "当前可先参考预估区间，最终仍需人工确认路线、时间与现场情况。",
+      "quoteRange": "$170 - $280",
+      "serviceCategory": "半日陪同",
+    },
+    "eligibility": "eligible",
+    "explain_summary": "半日陪同 当前可按标准口径给出预估区间。",
+    "explain_title": "已生成预估区间",
+    "name": "fixed output structure is stable",
+    "price_range": "AUD 170 - 280",
+    "product_id": "half-day-companion",
+  },
+]
+`;

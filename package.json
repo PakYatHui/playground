@@ -9,6 +9,7 @@
     "lint": "next lint",
     "format": "prettier --write .",
     "test": "vitest run",
+    "check": "npm run lint && npm run test && npm run build",
     "test:one-day-custom": "node scripts/test-one-day-custom.mjs"
   },
   "dependencies": {
