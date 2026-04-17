@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 
+import { PublicContactPanel } from "./PublicContactPanel";
 import { saveContactLead } from "./quote-storage";
 
 const DEFAULT_FORM = {
@@ -51,22 +52,30 @@ export function ContactLeadForm() {
         <p className="text-sm font-medium uppercase tracking-[0.28em] text-gold">
           Contact Intake
         </p>
-        <h2 className="mt-3 text-3xl font-semibold text-ink">最小留资页</h2>
+        <h2 className="mt-3 text-3xl font-semibold text-ink">联系与人工确认</h2>
         <div className="mt-5 space-y-3 text-sm leading-7 text-slate-600">
-          <p>1. 只收最必要信息，先拿到姓名、联系方式、服务方向与目标日期。</p>
-          <p>2. 提交后给明确成功反馈，不让页面停在空白或跳转不明状态。</p>
           <p>
-            3. 记录同样先保存在当前浏览器，作为段一“留资 + 查看记录”的基础准备。
+            1.
+            联系方式以微信优先，前台保持正式、克制，不额外写入未经确认的承诺。
+          </p>
+          <p>
+            2.
+            提交后会给出明确反馈，并继续引导你通过微信沟通路线、时间、人数和行李信息。
+          </p>
+          <p>
+            3.
+            当前页面记录仅保存在本浏览器，作为前台收集与本地查看的轻量版本，不替代正式后台系统。
           </p>
         </div>
+        <PublicContactPanel className="mt-8" />
         <div className="mt-8 rounded-[1.5rem] bg-white p-5 text-sm leading-7 text-slate-600">
-          <p className="m-0">推荐使用路径：</p>
+          <p className="m-0">建议沟通顺序：</p>
           <p className="mb-0 mt-2">
             先在{" "}
             <Link href="/quote" className="font-medium underline">
               报价页
             </Link>{" "}
-            预估，再到本页留资，后台即可看到两类记录。
+            获取预估区间，再到本页提交联系信息，随后优先加微信继续确认。
           </p>
         </div>
       </div>
@@ -106,10 +115,9 @@ export function ContactLeadForm() {
               className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-slate-500"
             >
               <option>机场接送</option>
-              <option>入住协助</option>
+              <option>机场 + 入住协助</option>
               <option>半日陪同</option>
               <option>一日定制</option>
-              <option>暂不确定，先沟通</option>
             </select>
           </label>
           <label className="space-y-2">
@@ -132,7 +140,7 @@ export function ContactLeadForm() {
             value={form.notes}
             onChange={(event) => updateField("notes", event.target.value)}
             className="w-full rounded-[1.5rem] border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-slate-500"
-            placeholder="例如：几点落地、几个人、是否带大件行李、是否要看房或采购。"
+            placeholder="例如：几个人、行李数量、预计路线、是否需要住处衔接或其他补充安排。"
           />
         </label>
 
@@ -155,11 +163,7 @@ export function ContactLeadForm() {
               提交时间：{new Date(submittedAt).toLocaleString("zh-CN")}。
             </p>
             <p className="mb-0 mt-2">
-              可前往{" "}
-              <Link href="/admin" className="font-medium underline">
-                管理页
-              </Link>{" "}
-              查看留资记录。
+              建议下一步直接添加微信沟通，并补充人数和行李信息，以便继续人工确认。
             </p>
           </div>
         ) : null}

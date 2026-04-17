@@ -1,125 +1,155 @@
-import { pricingRules, standardProducts } from "@/src/config/pricing";
+export const publicContact = {
+  platformName: "Pak in Melb｜墨尔本落地协助",
+  displayName: "PAK YAT HUI",
+  primaryLabel: "微信",
+  primaryValue: "pakinmelb",
+  phoneLabel: "手机号",
+  phoneValue: "0478822335",
+};
 
 export const siteMeta = {
-  brandName: "墨尔本地陪",
-  shortName: "墨尔本地陪",
-  title: "墨尔本地陪｜服务展示、预估报价与留资收集",
+  brandName: publicContact.platformName,
+  shortName: "Pak in Melb",
+  title: "Pak in Melb｜墨尔本落地协助",
   description:
-    "面向墨尔本落地接机、入住协助与半日陪同场景的轻量报价与留资站点，包含服务展示、预估报价、联系收集与基础记录查看。",
+    "面向墨尔本及周边落地协助场景的中文前台页面，提供服务展示、预估区间报价与联系提交，复杂情况需人工确认。",
   url: "https://example.com",
 };
 
 export const navigationItems = [
-  { label: "标准产品", href: "#services" },
-  { label: "业务规则", href: "#rules" },
-  { label: "使用方式", href: "#process" },
-  { label: "报价页", href: "/quote" },
+  { label: "服务类型", href: "#services" },
+  { label: "服务说明", href: "#process" },
   { label: "常见问题", href: "#faq" },
+  { label: "预估报价", href: "/quote" },
+  { label: "联系咨询", href: "/contact" },
 ];
 
 export const heroHighlights = [
-  `常驻起点：${pricingRules.baseLocation}`,
-  `核心机场路线：${pricingRules.coreRoute}`,
-  `半日陪同默认含时：${pricingRules.halfDayIncludedMinutes / 60} 小时`,
-  `一日定制默认含时：${pricingRules.oneDayIncludedMinutes / 60} 小时`,
-  `入住协助升级默认 +${pricingRules.accommodationAssistUpgradeAUD} AUD`,
+  "前台公开服务仅展示 4 类",
+  "报价结果只显示预估区间",
+  "复杂情况需人工确认",
+  "微信可直接复制联系",
 ];
 
-export const serviceCards = standardProducts.map((service) => ({
-  title: service.label,
-  description: service.summary,
-  meta: `含 ${service.includedServiceMinutes} 分钟服务 / ${service.includedKm} km`,
-}));
+export const serviceCards = [
+  {
+    title: "机场接送",
+    description:
+      "适合单点接送、落地接驳或送机安排，前台只做简洁说明，具体路线与时间再人工确认。",
+    meta: "适用于标准机场出发 / 到达场景",
+  },
+  {
+    title: "机场 + 入住协助",
+    description:
+      "适合首次抵达后需要到住处完成基础入住衔接的人，是否适合承接仍看当天路线与安排。",
+    meta: "接机后衔接住处当天安排",
+  },
+  {
+    title: "半日陪同",
+    description:
+      "适合半天内处理几项落地事务、熟悉周边、基础采购或简单办事陪同。",
+    meta: "适合相对集中的半天需求",
+  },
+  {
+    title: "一日定制",
+    description:
+      "适合事项较多、安排较满、路线较散或需要整天统筹的情况，最终方案需人工确认。",
+    meta: "复杂安排统一走人工确认",
+  },
+];
 
 export const processSteps = [
   {
     step: "01",
-    title: "前台只展示少量标准产品",
+    title: "先看当前开放的服务类型",
     description:
-      "用户先看到基础版、入住协助版、半日陪同版和一日定制版四类产品，不把复杂规则暴露在前台。",
+      "前台只展示机场接送、机场 + 入住协助、半日陪同和一日定制四类服务，不额外扩写未确认承诺。",
   },
   {
     step: "02",
-    title: "报价页先收最小必要字段",
+    title: "填写最小必要信息获取预估",
     description:
-      "先录入服务类型、日期、时间、路线范围、事项数量、地点数量与需求说明，页面立刻输出可沟通的预估区间。",
+      "报价页先收服务类型、日期时间、路线范围与需求说明，页面只输出可沟通的预估区间。",
   },
   {
     step: "03",
-    title: "系统自动判断产品与报价层级",
+    title: "复杂情况统一人工确认",
     description:
-      "半日集中陪同默认优先进入半日陪同版；若出现高强度、多事项、多地点、跨区域，或机场单后续叠加大量落地事务，则自动切到一日定制版。",
+      "靠近墨尔本的区域一般都可以，但具体仍要结合路线、时间、人数、行李和附加需求人工确认。",
   },
   {
     step: "04",
-    title: "联系页留资，管理页查看记录",
+    title: "优先加微信继续沟通",
     description:
-      "用户可继续提交联系信息，后台先通过本地记录查看两类提交，为后续接数据库或正式 CRM 预留边界。",
+      "提交联系信息后，页面优先引导加微信联系；如愿意，也可以补充人数和行李信息帮助更快确认。",
   },
 ];
 
 export const reasons = [
   {
-    title: "不是纯展示页",
+    title: "公开信息克制",
     description:
-      "首页用于对外展示，报价页已经接入可执行判断和预估区间，联系页与管理页形成最小闭环。",
+      "前台仅展示已确认开放的四类服务，不提前写入未确认的承诺型文案，也不扩写高风险服务类型。",
   },
   {
-    title: "规则与页面已解耦",
+    title: "报价口径清晰",
     description:
-      "产品配置和业务规则在 `src/config`，计算引擎在 `src/lib`，后续调整价格或边界不会牵动整页改版。",
+      "页面只展示预估区间，不展示内部成本底线、利润目标或精确加价公式，最终报价统一人工确认。",
   },
   {
-    title: "围绕机场标准单建立基线",
+    title: "覆盖范围表达留有余地",
     description:
-      "先把 South Melbourne / CBD 核心机场线做成可复用基线，再把入住协助升级、半日陪同与一日定制的边界逻辑叠加进去。",
+      "公开文案使用“墨尔本及周边为主”“靠近墨尔本的区域一般都可以”的口径，避免写死行政区边界。",
   },
   {
-    title: "报价底线可追溯",
+    title: "联系方式明确",
     description:
-      "人工时薪底线、目标时薪、车辆成本和风险缓冲都在规则里保留，页面对外只展示最必要的预估结果。",
+      "前台直接展示公开联系人、微信和手机号，并提供复制入口，联系提交后也优先引导到微信沟通。",
   },
 ];
 
 export const faqs = [
   {
-    question: "前台会展示全部业务规则吗？",
+    question: "当前前台开放哪些服务？",
     answer:
-      "不会。前台只展示四类标准产品和最小询价入口，细节判断由页面规则计算后给出预估区间，最终仍以人工确认口径为准。",
+      "目前前台只展示机场接送、机场 + 入住协助、半日陪同和一日定制四类服务。复杂情况不在前台直接承诺，统一人工确认。",
   },
   {
-    question: "机场基础版按什么标准判断？",
+    question: "服务区域怎么理解？",
     answer:
-      "默认基于 South Melbourne / CBD 核心区与 Melbourne Airport 之间的标准接送，含 75 分钟服务、30 分钟免费等待、50 km 车辆成本基线。",
+      "以墨尔本及周边为主。靠近墨尔本的区域一般都可以，具体是否承接仍要看路线和时间安排后再确认。",
   },
   {
-    question: "什么情况下会转入定制报价？",
+    question: "页面报价是不是最终价格？",
     answer:
-      "高强度、多事项、多地点、核心区外 / 特殊路线、一日统筹，或机场场景后续叠加大量事项时，都会进入一日定制版 / 定制报价，不继续硬套机场升级版或半日单。",
+      "不是。当前页面只提供预估区间，最终报价需根据路线、时间、人数、行李及附加需求人工确认。",
   },
   {
-    question: "入住协助升级版包含哪些，不包含哪些？",
+    question: "哪些情况需要人工确认？",
     answer:
-      "它继承机场基础版核心规则，并额外包含住处当天的基础入住协助，适用于公寓、宿舍、短租当天入住；但不自动包含多地址送达、中途采购绕路、办卡办事、特殊路线、明显复杂搬运行李或长时间等待。",
+      "跨区域、事项较多、时间较紧、行李较多，或需求描述本身较复杂时，都需要人工确认，不在前台直接给出固定承诺。",
   },
   {
-    question: "哪些情况会拒单？",
+    question: "提交联系信息后建议补充什么？",
     answer:
-      "当前版本默认 03:00-05:59 不接单；报价页会直接给出拒单提示，并建议改为人工沟通确认。",
+      "优先加微信继续沟通。若方便，也可以补充人数和行李信息；当前前台不要求主动填写航班号。",
   },
 ];
 
 export const contactCards = [
   {
-    title: "报价预估入口",
-    body: "首页 CTA 直接进入报价页，可先提交最小字段并看到预估区间。",
+    title: "公开联系人",
+    body: `${publicContact.displayName}｜微信 ${publicContact.primaryValue}｜手机号 ${publicContact.phoneValue}`,
   },
   {
-    title: "当前公开版本",
-    body: "本次交付先完成服务展示、报价预估、留资和基础记录查看，后续如需接数据库、账号权限或正式域名，再继续接入。",
+    title: "报价展示方式",
+    body: "页面结果只显示预估区间，不展示单一最终价；复杂情况需人工确认。",
   },
   {
-    title: "人工确认口径",
-    body: "本版页面输出仅作初步沟通依据，最终是否承接与最终报价仍以人工确认后的实际安排为准。",
+    title: "提交后建议",
+    body: "联系提交后优先引导加微信沟通，如有需要可再补充人数和行李信息。",
   },
 ];
+
+export const quoteDisclaimer =
+  "当前结果仅为预估区间，最终报价需根据路线、时间、人数、行李及附加需求人工确认。";

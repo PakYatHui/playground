@@ -9,15 +9,23 @@ import {
   type TaskIntensity,
   type TripIntent,
 } from "@/src/config/pricing";
+import { quoteDisclaimer } from "@/src/data/siteContent";
 import { calculateEstimate } from "@/src/lib/calculateEstimate";
 
 import { saveQuoteRequest } from "./quote-storage";
+
+type PublicServiceOption =
+  | "airport-transfer"
+  | "airport-transfer-plus-stay"
+  | "half-day"
+  | "full-day";
 
 const DEFAULT_FORM = {
   customerName: "",
   contactMethod: "",
   serviceDate: "",
   startTime: "09:00",
+  serviceOption: "airport-transfer" as PublicServiceOption,
   tripIntent: "airport-transfer" as TripIntent,
   routeScope: "core" as RouteScope,
   taskIntensity: "standard" as TaskIntensity,
@@ -60,6 +68,26 @@ export function QuoteRequestForm() {
     key: Key,
     value: (typeof DEFAULT_FORM)[Key],
   ) {
+    if (key === "serviceOption") {
+      const nextOption = value as PublicServiceOption;
+      const nextTripIntent: TripIntent =
+        nextOption === "half-day"
+          ? "half-day"
+          : nextOption === "full-day"
+            ? "full-day"
+            : "airport-transfer";
+
+      setForm((current) => ({
+        ...current,
+        serviceOption: nextOption,
+        tripIntent: nextTripIntent,
+        includeAccommodationAssist: nextOption === "airport-transfer-plus-stay",
+        waitMinutes:
+          nextTripIntent === "airport-transfer" ? current.waitMinutes : 0,
+      }));
+      return;
+    }
+
     setForm((current) => ({
       ...current,
       [key]: value,
@@ -78,7 +106,10 @@ export function QuoteRequestForm() {
       submittedAt: savedAt,
       customerName: form.customerName.trim() || "未填写姓名",
       contactMethod: form.contactMethod.trim() || "未填写联系方式",
-      tripIntent: tripIntentLabels[form.tripIntent],
+      tripIntent:
+        form.serviceOption === "airport-transfer-plus-stay"
+          ? "机场 + 入住协助"
+          : tripIntentLabels[form.tripIntent],
       serviceDate: form.serviceDate || "待确认",
       startTime: form.startTime,
       estimatedRangeLabel: estimateLabel,
@@ -103,7 +134,7 @@ export function QuoteRequestForm() {
           </p>
           <h2 className="mt-3 text-3xl font-semibold text-ink">最小询价字段</h2>
           <p className="mt-3 text-sm leading-7 text-slate-600">
-            先收服务类型、日期时间、复杂度和需求说明，页面只输出预估区间，最终是否承接与最终报价仍以人工确认为准。
+            先收服务类型、日期时间、路线范围和需求说明，页面只输出预估区间，不展示单一最终价。
           </p>
         </div>
 
@@ -135,13 +166,19 @@ export function QuoteRequestForm() {
           <label className="space-y-2">
             <span className="text-sm font-medium text-slate-700">服务类型</span>
             <select
-              value={form.tripIntent}
+              value={form.serviceOption}
               onChange={(event) =>
-                updateField("tripIntent", event.target.value as TripIntent)
+                updateField(
+                  "serviceOption",
+                  event.target.value as PublicServiceOption,
+                )
               }
               className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-slate-500"
             >
               <option value="airport-transfer">机场接送</option>
+              <option value="airport-transfer-plus-stay">
+                机场 + 入住协助
+              </option>
               <option value="half-day">半日陪同</option>
               <option value="full-day">一日定制</option>
             </select>
@@ -253,7 +290,7 @@ export function QuoteRequestForm() {
             value={form.taskSummary}
             onChange={(event) => updateField("taskSummary", event.target.value)}
             className="w-full rounded-[1.5rem] border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-slate-500"
-            placeholder="例如：接机后送去公寓，顺带熟悉附近超市和生活区。"
+            placeholder="例如：接机后送去公寓；或半天内处理几项落地事务；或需要整天陪同安排。"
           />
         </label>
 
@@ -266,30 +303,15 @@ export function QuoteRequestForm() {
               updateField("complexityNotes", event.target.value)
             }
             className="w-full rounded-[1.5rem] border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-slate-500"
-            placeholder="例如：家长同行、需要看房、跨区、夜间到达。"
+            placeholder="例如：家长同行、人数较多、行李较多、跨区、夜间到达。"
           />
         </label>
 
-        <button
-          type="button"
-          disabled={!isAirportFlow}
-          onClick={() =>
-            updateField(
-              "includeAccommodationAssist",
-              !form.includeAccommodationAssist,
-            )
-          }
-          className={`rounded-[1.5rem] border px-4 py-4 text-left transition ${
-            form.includeAccommodationAssist
-              ? "border-ink bg-[#f4efe6]"
-              : "border-slate-300 bg-white"
-          } ${!isAirportFlow ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400" : ""}`}
-        >
-          <p className="text-sm font-medium text-ink">接机后还需要入住协助</p>
-          <p className="mt-2 text-xs leading-6 text-slate-500">
-            仅机场链路可选，用于最小升级判断。
-          </p>
-        </button>
+        {isAirportFlow ? (
+          <div className="rounded-[1.5rem] border border-slate-200 bg-[#faf7f2] px-4 py-4 text-sm leading-7 text-slate-600">
+            当前服务类型已按所选项自动判断是否包含入住协助；如实际安排更复杂，仍需人工确认。
+          </div>
+        ) : null}
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <button
@@ -299,7 +321,7 @@ export function QuoteRequestForm() {
             保存询价记录
           </button>
           <p className="m-0 text-sm text-slate-500">
-            记录仅以脱敏形式保存在当前浏览器，供段一演示和后台查看准备使用。
+            记录仅以脱敏形式保存在当前浏览器，供当前前台演示与本地查看准备使用。
           </p>
         </div>
       </form>
@@ -343,15 +365,9 @@ export function QuoteRequestForm() {
           </p>
           <h3 className="mt-3 text-2xl font-semibold text-ink">人工确认口径</h3>
           <div className="mt-5 space-y-3 text-sm leading-7 text-slate-600">
-            <p>1. 页面结果仅作预估沟通，不构成最终承诺。</p>
-            <p>
-              2.
-              多地点、跨区域、凌晨时段、临时改动，都会导致最终价格与页面区间不同。
-            </p>
-            <p>
-              3.
-              最终是否承接、出车安排与最终报价，仍以人工确认后的实际安排为准。
-            </p>
+            <p>1. {quoteDisclaimer}</p>
+            <p>2. 靠近墨尔本的区域一般都可以，具体仍要结合路线和时间确认。</p>
+            <p>3. 建议提交后优先通过微信继续沟通，并补充人数和行李信息。</p>
           </div>
         </div>
 
@@ -369,10 +385,13 @@ export function QuoteRequestForm() {
               label="影响报价字段"
               value="开始时间、路线范围、事项数量、地点数量、预计时长、事项强度"
             />
-            <FieldRow label="机场升级字段" value="是否包含入住协助" />
+            <FieldRow
+              label="公开服务类型"
+              value="机场接送、机场 + 入住协助、半日陪同、一日定制"
+            />
             <FieldRow
               label="输出结果"
-              value="产品判断、报价层级、最低安全报价、建议报价、人工确认说明"
+              value="产品判断、报价层级、预估区间、人工确认说明"
             />
           </div>
         </div>

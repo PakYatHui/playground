@@ -1,6 +1,12 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import {
+  publicContact,
+  quoteDisclaimer,
+  siteMeta,
+} from "@/src/data/siteContent";
+
 const navigationItems = [
   { href: "/", label: "首页" },
   { href: "/quote", label: "报价" },
@@ -20,10 +26,10 @@ export function SiteShell({ children }: { children: ReactNode }) {
               href="/"
               className="text-sm font-semibold uppercase tracking-[0.28em] text-stone-800"
             >
-              Melbourne Arrival Concierge
+              {siteMeta.shortName}
             </Link>
             <span className="rounded-full border border-amber-800/15 bg-amber-50 px-3 py-1 text-xs text-amber-900">
-              Stage 1
+              微信优先
             </span>
           </div>
           <nav className="flex flex-wrap gap-2 text-sm text-stone-600">
@@ -58,7 +64,8 @@ export function SiteShell({ children }: { children: ReactNode }) {
             ))}
           </div>
           <p className="m-0">
-            当前页面用于服务说明、预估报价与留资收集。页面展示内容和系统判断仅作为初步沟通依据，是否承接与最终报价仍以人工确认后的实际安排为准。
+            {quoteDisclaimer} 公开联系人：{publicContact.displayName}，微信{" "}
+            {publicContact.primaryValue}。
           </p>
         </div>
       </footer>

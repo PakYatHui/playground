@@ -1,4 +1,5 @@
 import { ConsultationButton } from "@/src/components/ConsultationButton";
+import { PublicContactPanel } from "@/src/components/PublicContactPanel";
 import { SectionHeading } from "@/src/components/SectionHeading";
 import { contactCards } from "@/src/data/siteContent";
 
@@ -9,14 +10,15 @@ export function ContactSection() {
         <div className="space-y-6">
           <SectionHeading
             eyebrow="Contact"
-            title="先把询价与留资闭环跑通"
-            description="段一先提供可提交的报价页与联系页，先完成最小转化链路，再决定后续接微信、外部表单或正式 CRM。"
+            title="联系方式公开清晰，提交后优先走微信沟通"
+            description="前台联系信息以微信为主，手机号可作为补充展示；如路线、时间或需求较复杂，统一人工确认。"
           />
           <ConsultationButton
             className="w-full sm:w-auto"
             href="/contact"
             label="填写联系信息"
           />
+          <PublicContactPanel />
         </div>
         <div className="grid gap-5 md:grid-cols-3">
           {contactCards.map((card) => (

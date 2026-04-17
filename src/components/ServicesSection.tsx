@@ -7,8 +7,8 @@ export function ServicesSection() {
       <div className="mx-auto max-w-6xl space-y-10">
         <SectionHeading
           eyebrow="Services"
-          title="服务内容以落地协助为主，不做花哨包装"
-          description="首版原型先展示最核心的服务框架，重点解决刚到墨尔本时最容易发生的信息差、路径不熟与安排混乱问题。"
+          title="当前开放服务保持克制表达"
+          description="前台只展示已确认开放的四类服务，不擅自扩写更多承诺型内容；复杂情况统一人工确认。"
         />
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
           {serviceCards.map((card) => (
@@ -20,8 +20,12 @@ export function ServicesSection() {
                 核心场景
               </div>
               <h3 className="text-xl font-semibold text-ink">{card.title}</h3>
-              <p className="mt-3 text-xs font-medium uppercase tracking-[0.18em] text-slate-500">{card.meta}</p>
-              <p className="mt-4 text-sm leading-7 text-slate-600">{card.description}</p>
+              <p className="mt-3 text-xs font-medium uppercase tracking-[0.18em] text-slate-500">
+                {card.meta}
+              </p>
+              <p className="mt-4 text-sm leading-7 text-slate-600">
+                {card.description}
+              </p>
             </article>
           ))}
         </div>
