@@ -34,7 +34,7 @@ fi
 ENV_B64="$(base64 -w0 "$ENV_FILE")"
 
 read -r -d '' REMOTE_SCRIPT <<'EOF' || true
-set -euo pipefail
+set -eu
 
 export DEBIAN_FRONTEND=noninteractive
 
@@ -43,7 +43,7 @@ apt-get install -y git curl ca-certificates nodejs npm
 
 install -d -m 0755 /opt/manager-site
 
-if [[ ! -d "__APP_DIR__/.git" ]]; then
+if [ ! -d "__APP_DIR__/.git" ]; then
   rm -rf "__APP_DIR__"
   git clone "__APP_REPO__" "__APP_DIR__"
 fi
@@ -105,6 +105,18 @@ export AZURE_CONFIG_DIR
   --command-id RunShellScript \
   --scripts "$REMOTE_SCRIPT" \
   -o json >/tmp/manager-vm-deploy.json
+
+python3 - <<'PY'
+import json
+from pathlib import Path
+
+payload = json.loads(Path("/tmp/manager-vm-deploy.json").read_text())
+message = payload["value"][0]["message"]
+stderr = message.split("[stderr]\n", 1)[1].strip() if "[stderr]\n" in message else ""
+
+if stderr:
+    raise SystemExit(f"Remote deploy reported stderr:\n{stderr}")
+PY
 
 cloudflared tunnel route dns --overwrite-dns "$VM_TUNNEL_ID" "$DOMAIN" >/tmp/manager-vm-dns-route.log
 
