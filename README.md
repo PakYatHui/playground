@@ -9,7 +9,7 @@
 - `/contact` 提供独立留资入口
 - `/admin` 只保留本地脱敏记录查看，不承担真实后台能力
 
-本仓库明确不做数据库、真实鉴权、支付、CRM、派单或完整运营后台。
+本仓库明确不做支付、真实鉴权、CRM、派单或完整运营后台。段三第一部分只冻结最小存储路线与 leads 数据模型，尚未把真实写库流程接入页面。
 
 ## 本地启动
 
@@ -98,6 +98,9 @@ cp .env.example .env.local
 - `NEXT_PUBLIC_SITE_URL`：本地或部署地址，用于 metadata 和站点链接
 - `CONTACT_EMAIL`：联系邮箱
 - `PORT`：本地运行端口
+- `SUPABASE_URL`：Supabase 项目地址，供后续服务端 leads 写入使用
+- `SUPABASE_SERVICE_ROLE_KEY`：Supabase 服务端密钥，只能放在服务端环境变量
+- `SUPABASE_LEADS_TABLE`：leads 表名，默认 `leads`
 
 ## 当前实现重点
 
@@ -111,4 +114,5 @@ cp .env.example .env.local
 
 - 段一：已完成最小展示、询价、留资和本地记录闭环
 - 段二：已完成分步询价、配置驱动规则引擎、可解释校验、结果卡片、复制摘要、安全头、测试与 CI
-- 段三：尚未开始，本仓库当前不应被描述为完整后台产品
+- 段三第一部分：已冻结边界、选定 `Supabase / Postgres + Next route handler` 路线，并建立最小 `leads` 数据模型
+- 段三其余部分：尚未开始，本仓库当前不应被描述为完整后台产品
