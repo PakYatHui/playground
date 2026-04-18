@@ -18,7 +18,9 @@ export default function AdminPage() {
           极简后台 leads 管理页
         </h1>
         <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-600">
-          当前只实现段三第二部分的最小后台能力：Bearer token 鉴权、列表查询、状态更新、内部备注和 CSV 导出，不扩展成完整 CRM 或运营系统。
+          当前保持静态托管，页面本身不再依赖同站点 API。若需要继续使用列表查询、状态更新与
+          CSV 导出，请部署仓库内附带的 Supabase Edge Function，并用 Bearer token
+          访问它。
         </p>
       </section>
 

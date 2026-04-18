@@ -8,132 +8,81 @@ AZURE_CONFIG_DIR="${AZURE_CONFIG_DIR:-/home/pak/.azure-wsl}"
 RESOURCE_GROUP="${RESOURCE_GROUP:-rg-manager}"
 VM_NAME="${VM_NAME:-manager-vm}"
 DOMAIN="${DOMAIN:-manager.pakagent.dpdns.org}"
-VM_TUNNEL_ID="${VM_TUNNEL_ID:-3bfe311d-2ecd-44d3-be4b-1ee363981f17}"
-ENV_FILE="${ENV_FILE:-/home/pak/.config/melbourne-manager/manager-site.env}"
-APP_REF="${APP_REF:-$(git -C "$ROOT_DIR" rev-parse HEAD)}"
-APP_DIR="${APP_DIR:-/opt/manager-site/app}"
+VM_TUNNEL_ID="${VM_TUNNEL_ID:-}"
 SERVICE_NAME="${SERVICE_NAME:-manager-site.service}"
 TUNNEL_SERVICE_NAME="${TUNNEL_SERVICE_NAME:-cloudflared-manager.service}"
+APP_REF="${APP_REF:-$(git -C "$ROOT_DIR" rev-parse --short HEAD)}"
+ARTIFACT_PATH="${ARTIFACT_PATH:-/tmp/manager-site-static-${APP_REF}.tar.gz}"
+PREVIEW_PORT="${PREVIEW_PORT:-38123}"
+ROUTE_DOMAIN_TO_VM="${ROUTE_DOMAIN_TO_VM:-0}"
 
-resolve_app_repo() {
-  if [[ -n "${APP_REPO:-}" ]]; then
-    printf '%s\n' "$APP_REPO"
-    return
-  fi
-
-  local origin_url
-  origin_url="$(git -C "$ROOT_DIR" remote get-url origin 2>/dev/null || true)"
-
-  if [[ -z "$origin_url" ]]; then
-    echo "Unable to resolve origin remote. Set APP_REPO explicitly." >&2
-    exit 1
-  fi
-
-  case "$origin_url" in
-    git@github.com:*)
-      origin_url="https://github.com/${origin_url#git@github.com:}"
-      ;;
-    ssh://git@github.com/*)
-      origin_url="https://github.com/${origin_url#ssh://git@github.com/}"
-      ;;
-  esac
-
-  printf '%s\n' "$origin_url"
-}
-
-APP_REPO="$(resolve_app_repo)"
+cd "$ROOT_DIR"
 
 if [[ ! -x "$AZ_BIN" ]]; then
   echo "Azure CLI not found at $AZ_BIN" >&2
   exit 1
 fi
 
-if [[ ! -f "$ENV_FILE" ]]; then
-  echo "Environment file not found at $ENV_FILE" >&2
-  exit 1
-fi
+echo "Building static site locally for ref $APP_REF"
+npm ci
+npm run build
 
-if ! command -v cloudflared >/dev/null 2>&1; then
-  echo "cloudflared is required on the local machine." >&2
-  exit 1
-fi
-
-ENV_B64="$(base64 -w0 "$ENV_FILE")"
+tar -C "$ROOT_DIR/out" -czf "$ARTIFACT_PATH" .
+ARTIFACT_B64="$(base64 -w0 "$ARTIFACT_PATH")"
 
 read -r -d '' REMOTE_SCRIPT <<'EOF' || true
 set -eu
 
-export DEBIAN_FRONTEND=noninteractive
+RELEASE_DIR="/srv/manager-site-releases/__APP_REF__"
+BACKUP_DIR="/srv/manager-site-backups/$(date +%Y%m%d%H%M%S)"
+LIVE_DIR="/srv/manager-site"
+PREVIEW_PORT="__PREVIEW_PORT__"
+SERVICE_NAME="__SERVICE_NAME__"
+TUNNEL_SERVICE_NAME="__TUNNEL_SERVICE_NAME__"
 
-apt-get update
-apt-get install -y git curl ca-certificates gnupg
+mkdir -p /srv/manager-site-releases /srv/manager-site-backups "$RELEASE_DIR"
+rm -rf "$RELEASE_DIR"
+mkdir -p "$RELEASE_DIR"
 
-if ! command -v node >/dev/null 2>&1 || ! node -e 'process.exit(Number(process.versions.node.split(".")[0]) >= 22 ? 0 : 1)'; then
-  install -d -m 0755 /etc/apt/keyrings
-  curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
-    | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
-  echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" \
-    > /etc/apt/sources.list.d/nodesource.list
-  apt-get update
-  apt-get install -y nodejs
+printf '%s' '__ARTIFACT_B64__' | base64 -d > /tmp/manager-site-static.tar.gz
+tar -xzf /tmp/manager-site-static.tar.gz -C "$RELEASE_DIR"
+
+test -f "$RELEASE_DIR/index.html"
+test -f "$RELEASE_DIR/quote.html"
+test -f "$RELEASE_DIR/contact.html"
+test -f "$RELEASE_DIR/admin.html"
+test -f "$RELEASE_DIR/health.html"
+
+python3 -m http.server "$PREVIEW_PORT" -d "$RELEASE_DIR" >/tmp/manager-site-preview.log 2>&1 &
+PREVIEW_PID="$!"
+trap 'kill "$PREVIEW_PID" 2>/dev/null || true' EXIT
+sleep 2
+curl -fsS "http://127.0.0.1:${PREVIEW_PORT}/quote" >/dev/null
+curl -fsS "http://127.0.0.1:${PREVIEW_PORT}/contact" >/dev/null
+curl -fsS "http://127.0.0.1:${PREVIEW_PORT}/health" >/dev/null
+kill "$PREVIEW_PID" 2>/dev/null || true
+wait "$PREVIEW_PID" 2>/dev/null || true
+trap - EXIT
+
+if [ -e "$LIVE_DIR" ] || [ -L "$LIVE_DIR" ]; then
+  mv "$LIVE_DIR" "$BACKUP_DIR"
 fi
 
-install -d -m 0755 /opt/manager-site
+ln -sfn "$RELEASE_DIR" "$LIVE_DIR"
+chown -h azureuser:azureuser "$LIVE_DIR" || true
+chown -R azureuser:azureuser "$RELEASE_DIR"
 
-if [ ! -d "__APP_DIR__/.git" ]; then
-  rm -rf "__APP_DIR__"
-  git clone "__APP_REPO__" "__APP_DIR__"
-fi
-
-git -C "__APP_DIR__" fetch --all --tags --prune
-git -C "__APP_DIR__" checkout -f "__APP_REF__"
-
-printf '%s' '__ENV_B64__' | base64 -d > /etc/manager-site.env
-chmod 600 /etc/manager-site.env
-
-cd "__APP_DIR__"
-npm ci
-npm run build
-chown -R azureuser:azureuser /opt/manager-site
-
-cat > /etc/systemd/system/__SERVICE_NAME__ <<'SERVICE'
-[Unit]
-Description=Manager Site Next.js Service
-After=network-online.target
-Wants=network-online.target
-
-[Service]
-Type=simple
-User=azureuser
-Group=azureuser
-WorkingDirectory=__APP_DIR__
-EnvironmentFile=/etc/manager-site.env
-Environment=HOME=/home/azureuser
-Environment=NODE_ENV=production
-ExecStart=/usr/bin/npm run start -- -H 127.0.0.1 -p 3000
-Restart=always
-RestartSec=5
-TimeoutStopSec=30
-
-[Install]
-WantedBy=multi-user.target
-SERVICE
-
-systemctl daemon-reload
-systemctl enable __SERVICE_NAME__
-systemctl restart __SERVICE_NAME__
-systemctl restart __TUNNEL_SERVICE_NAME__
-systemctl is-active __SERVICE_NAME__
-systemctl is-active __TUNNEL_SERVICE_NAME__
-curl -fsS --max-time 15 http://127.0.0.1:3000/api/health
+systemctl restart "$SERVICE_NAME"
+systemctl is-active "$SERVICE_NAME"
+systemctl is-active "$TUNNEL_SERVICE_NAME"
+curl -fsS --max-time 15 http://127.0.0.1:3000/health >/dev/null
 EOF
 
-REMOTE_SCRIPT="${REMOTE_SCRIPT//__APP_DIR__/$APP_DIR}"
-REMOTE_SCRIPT="${REMOTE_SCRIPT//__APP_REPO__/$APP_REPO}"
 REMOTE_SCRIPT="${REMOTE_SCRIPT//__APP_REF__/$APP_REF}"
-REMOTE_SCRIPT="${REMOTE_SCRIPT//__ENV_B64__/$ENV_B64}"
+REMOTE_SCRIPT="${REMOTE_SCRIPT//__PREVIEW_PORT__/$PREVIEW_PORT}"
 REMOTE_SCRIPT="${REMOTE_SCRIPT//__SERVICE_NAME__/$SERVICE_NAME}"
 REMOTE_SCRIPT="${REMOTE_SCRIPT//__TUNNEL_SERVICE_NAME__/$TUNNEL_SERVICE_NAME}"
+REMOTE_SCRIPT="${REMOTE_SCRIPT//__ARTIFACT_B64__/$ARTIFACT_B64}"
 
 export AZURE_CONFIG_DIR
 
@@ -142,13 +91,13 @@ export AZURE_CONFIG_DIR
   -n "$VM_NAME" \
   --command-id RunShellScript \
   --scripts "$REMOTE_SCRIPT" \
-  -o json >/tmp/manager-vm-deploy.json
+  -o json >/tmp/manager-vm-static-deploy.json
 
 python3 - <<'PY'
 import json
 from pathlib import Path
 
-payload = json.loads(Path("/tmp/manager-vm-deploy.json").read_text())
+payload = json.loads(Path("/tmp/manager-vm-static-deploy.json").read_text())
 message = payload["value"][0]["message"]
 stderr = message.split("[stderr]\n", 1)[1].strip() if "[stderr]\n" in message else ""
 
@@ -156,10 +105,9 @@ if stderr:
     raise SystemExit(f"Remote deploy reported stderr:\n{stderr}")
 PY
 
-cloudflared tunnel route dns --overwrite-dns "$VM_TUNNEL_ID" "$DOMAIN" >/tmp/manager-vm-dns-route.log
+if [[ "$ROUTE_DOMAIN_TO_VM" == "1" && -n "$VM_TUNNEL_ID" ]] && command -v cloudflared >/dev/null 2>&1; then
+  cloudflared tunnel route dns --overwrite-dns "$VM_TUNNEL_ID" "$DOMAIN" >/tmp/manager-vm-dns-route.log
+fi
 
-curl -fsS --max-time 20 "https://$DOMAIN/api/health" >/tmp/manager-vm-public-health.json
-curl -I -fsS --max-time 20 "https://$DOMAIN/quote" >/tmp/manager-vm-quote.headers
-curl -I -fsS --max-time 20 "https://$DOMAIN/contact" >/tmp/manager-vm-contact.headers
-
-echo "Deployment completed for $DOMAIN using ref $APP_REF"
+echo "Static artifact deployed to $VM_NAME using ref $APP_REF"
+echo "Artifact path: $ARTIFACT_PATH"

@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+import { fetchLeadAdmin } from "@/src/lib/leads/admin-client";
+import { getPublicLeadsAdminUrl } from "@/src/lib/leads/public-env";
 import { leadStatuses, type LeadRecord, type LeadStatus } from "@/src/lib/leads/types";
 
 type AdminLeadResponse = {
@@ -37,19 +39,6 @@ function getErrorMessage(error: unknown) {
   return "请求失败，请稍后再试。";
 }
 
-async function parseJsonError(response: Response) {
-  try {
-    const payload = (await response.json()) as {
-      error?: {
-        message?: string;
-      };
-    };
-    return payload.error?.message || "请求失败，请稍后再试。";
-  } catch {
-    return "请求失败，请稍后再试。";
-  }
-}
-
 export function AdminRecordsPanel() {
   const [token, setToken] = useState("");
   const [status, setStatus] = useState<LeadStatus | "all">("all");
@@ -60,6 +49,7 @@ export function AdminRecordsPanel() {
   const [isLoading, setIsLoading] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const adminUrl = getPublicLeadsAdminUrl();
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -84,20 +74,16 @@ export function AdminRecordsPanel() {
     setFetchError(null);
 
     try {
-      const response = await fetch(
-        `/api/leads?page=${nextPage}&page_size=20&status=${nextStatus}`,
-        {
-          headers: {
-            Authorization: `Bearer ${nextToken.trim()}`,
-          },
-          cache: "no-store",
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error(await parseJsonError(response));
-      }
-
+      const response = await fetchLeadAdmin("/", {
+        cache: "no-store",
+        method: "GET",
+        searchParams: new URLSearchParams({
+          page: String(nextPage),
+          page_size: "20",
+          status: nextStatus,
+        }),
+        token: nextToken,
+      });
       const payload = (await response.json()) as AdminLeadResponse;
       const nextDrafts = payload.items.reduce<LeadDrafts>((acc, lead) => {
         acc[lead.id] = {
@@ -145,18 +131,14 @@ export function AdminRecordsPanel() {
 
     try {
       const draft = drafts[id];
-      const response = await fetch(`/api/leads/${id}`, {
+      await fetchLeadAdmin(`/${id}`, {
         method: "PATCH",
         headers: {
-          Authorization: `Bearer ${token.trim()}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify(draft),
+        token,
       });
-
-      if (!response.ok) {
-        throw new Error(await parseJsonError(response));
-      }
 
       await loadLeads(page, status, token);
     } catch (error) {
@@ -176,15 +158,13 @@ export function AdminRecordsPanel() {
     setFetchError(null);
 
     try {
-      const response = await fetch(`/api/leads/export.csv?status=${status}`, {
-        headers: {
-          Authorization: `Bearer ${token.trim()}`,
-        },
+      const response = await fetchLeadAdmin("/export.csv", {
+        method: "GET",
+        searchParams: new URLSearchParams({
+          status,
+        }),
+        token,
       });
-
-      if (!response.ok) {
-        throw new Error(await parseJsonError(response));
-      }
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -223,9 +203,25 @@ export function AdminRecordsPanel() {
               Bearer Token 后台查询
             </h2>
             <p className="mt-3 text-sm leading-7 text-slate-600">
-              token 只在当前浏览器 session 暂存，用来请求受保护的管理 API，不会写死到前端代码。
+              token 只在当前浏览器 session 暂存，用来请求受保护的 Supabase Edge
+              Function，不会写死到前端代码。
             </p>
           </div>
+
+          {!adminUrl ? (
+            <div className="rounded-[1.5rem] border border-amber-200 bg-amber-50 p-5 text-sm leading-7 text-amber-900">
+              <p className="m-0 font-medium">当前未启用管理员接口。</p>
+              <p className="mb-0 mt-2">
+                请先部署 `supabase/functions/leads-admin`，并把
+                `NEXT_PUBLIC_LEADS_ADMIN_URL` 指向该 Edge Function。
+              </p>
+            </div>
+          ) : (
+            <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5 text-sm leading-7 text-slate-600">
+              <p className="m-0 font-medium text-slate-800">当前管理接口</p>
+              <p className="mb-0 mt-2 break-all">{adminUrl}</p>
+            </div>
+          )}
 
           <label className="space-y-2">
             <span className="text-sm font-medium text-slate-700">
@@ -237,6 +233,7 @@ export function AdminRecordsPanel() {
               onChange={(event) => setToken(event.target.value)}
               className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-slate-500"
               placeholder="输入环境变量中的 ADMIN_BEARER_TOKEN"
+              disabled={!adminUrl}
             />
           </label>
 
@@ -261,16 +258,16 @@ export function AdminRecordsPanel() {
               <button
                 type="button"
                 onClick={() => loadLeads(1, status, token)}
-                disabled={isLoading}
-                className="inline-flex items-center justify-center rounded-full bg-ink px-5 py-3 text-sm font-medium text-white transition hover:opacity-90"
+                disabled={!adminUrl || isLoading}
+                className="inline-flex items-center justify-center rounded-full bg-ink px-5 py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isLoading ? "加载中..." : "查询记录"}
               </button>
               <button
                 type="button"
                 onClick={exportCsv}
-                disabled={isExporting}
-                className="inline-flex items-center justify-center rounded-full border border-slate-300 px-5 py-3 text-sm font-medium text-slate-700 transition hover:border-slate-500"
+                disabled={!adminUrl || isExporting}
+                className="inline-flex items-center justify-center rounded-full border border-slate-300 px-5 py-3 text-sm font-medium text-slate-700 transition hover:border-slate-500 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isExporting ? "导出中..." : "导出 CSV"}
               </button>

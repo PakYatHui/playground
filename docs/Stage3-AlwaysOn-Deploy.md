@@ -1,45 +1,158 @@
-# 段三补充收口：前台常在线部署
+# 段三补充收口：静态托管 + Supabase 写库
 
-本次仍然属于段三补充收口，不扩成完整后台迁移。
+本次把段三部署路线切到“静态站点 + Supabase 数据采集”，不再让 Azure VM 承担
+`npm ci`、`next build` 或 `next start`。
 
-## 目标
+## 最小架构
 
-- 让 `/quote` 在本机关机后继续可访问
-- 让 `/contact` 在本机关机后继续可访问
-- 继续复用现有 `POST /api/leads -> Supabase` 写库链路
-- `/admin` 保持极简入口，不新增后台产品范围
+- `/`、`/quote`、`/contact`、`/admin`、`/health` 全部由 Next.js 静态导出到 `out/`
+- VM 继续只做静态文件托管，不新增常驻 Node 服务
+- 公开表单直接从浏览器调用 Supabase REST API，把 lead 写入 `public.leads`
+- 前端只使用 `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY` 只留给可选的 `supabase/functions/leads-admin`
+- `/admin` 页面本身仍是静态页；要启用真实查询/更新/CSV 导出时，再部署 Edge Function
 
-## 选择的最小方案
+## 数据流
 
-选择把当前整套 Next.js 站点部署到现有 Azure VM `manager-vm`。
+### 公开写入
 
-原因：
+1. 用户在 `/quote` 或 `/contact` 填表
+2. 前端复用 `src/lib/leads/validation.ts` 和 `src/lib/leads/mappers.ts`
+3. 浏览器生成 `lead_id`
+4. 浏览器用 anon key POST 到：
+   `https://<project>.supabase.co/rest/v1/leads`
+5. RLS 只允许 `anon` 执行最小 insert，不允许 select/update/delete
 
-- `/quote`、`/contact` 依赖同站点内的 `/api/leads`
-- 如果只迁两个页面，反而要额外拆 API、处理跨域和新增维护面
-- 当前环境已经有可复用的 VM、Cloudflare tunnel 和管理脚本
+### 管理读取
 
-## 部署结果要求
+1. `/admin` 静态页面读取 `NEXT_PUBLIC_LEADS_ADMIN_URL`
+2. 浏览器把手工输入的 `ADMIN_BEARER_TOKEN` 发给 `leads-admin` Edge Function
+3. Edge Function 用 `SUPABASE_SERVICE_ROLE_KEY` 查询、更新和导出 CSV
 
-- VM 本地 `127.0.0.1:3000` 返回 Next.js 站点
-- Cloudflare 正式域名继续使用 `https://manager.pakagent.dpdns.org`
-- 正式域名切回 VM tunnel，而不是继续指向本机 tunnel
-- `POST /api/leads` 继续使用现有环境变量写入当前 Supabase
+## 必要环境变量
 
-## 运维脚本
+### 前端静态站点
 
-使用 `scripts/deploy-manager-vm.sh`：
+- `NEXT_PUBLIC_SITE_NAME`
+- `NEXT_PUBLIC_SITE_URL`
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `NEXT_PUBLIC_SUPABASE_LEADS_TABLE=leads`
+- `NEXT_PUBLIC_LEADS_ADMIN_URL`
 
-- 读取本机已有 `manager-site.env`
-- 通过 Azure run-command 在 VM 上安装最小 Node 运行环境
-- 拉取指定 Git 提交并执行 `npm ci`、`npm run build`
-- 重写 `manager-site.service` 为 Next.js 服务
-- 重启 VM 上的 `manager-site.service` 与 `cloudflared-manager.service`
-- 在本机用 Cloudflare tunnel 命令把正式域名路由到 VM tunnel
+### Supabase Edge Function
 
-## 明确不做
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_LEADS_TABLE=leads`
+- `ADMIN_BEARER_TOKEN`
+- `LEADS_ADMIN_ALLOWED_ORIGINS`
 
-- 不重做 Supabase 接入
-- 不重建 `leads` 表
-- 不加支付、CRM、多角色、派单、完整登录
-- 不把 `/admin` 扩成完整后台
+## Supabase 变更
+
+### 现有表结构
+
+- `supabase/migrations/20260418_create_leads.sql`
+
+### 新增 RLS migration
+
+- `supabase/migrations/20260419_public_lead_insert_rls.sql`
+
+它做了这些限制：
+
+- 开启 `public.leads` 的 RLS
+- 仅给 `anon` 开放 `insert`
+- 禁止匿名读取、更新、删除
+- 限制公开写入只能创建 `status='new'`
+- 限制 `internal_notes=''`
+- 限制 `inputs.source` 只能是 `quote` 或 `contact`
+
+## 部署命令
+
+### 1. 本地构建静态产物
+
+```bash
+npm ci
+npm run build
+```
+
+构建结果在：
+
+```bash
+out/
+```
+
+### 2. 直接部署静态产物到 VM
+
+```bash
+./scripts/deploy-manager-vm.sh
+```
+
+这个脚本会：
+
+- 本地执行 `npm ci` 和 `npm run build`
+- 打包 `out/` 为静态压缩包
+- 通过 Azure Run Command 把压缩包发送到 `manager-vm`
+- 在 VM 上先用短暂的 Python 静态预览验证 `/quote`、`/contact`、`/health`
+- 验证通过后把 `/srv/manager-site` 原子切到新的 release
+- 重启现有静态服务 `manager-site.service`
+
+它不会：
+
+- 在 VM 上执行 `npm ci`
+- 在 VM 上执行 `next start`
+- 引入新的常驻 Node 运行时
+
+如果正式域名还没有指向 VM tunnel，可在本地额外传入：
+
+```bash
+ROUTE_DOMAIN_TO_VM=1 VM_TUNNEL_ID=<your-vm-tunnel-id> ./scripts/deploy-manager-vm.sh
+```
+
+### 3. 应用 Supabase migration
+
+```bash
+npx supabase db push
+```
+
+如果当前环境没有 Supabase 登录态，也可以直接在 Supabase SQL Editor 执行：
+
+- `supabase/migrations/20260418_create_leads.sql`
+- `supabase/migrations/20260419_public_lead_insert_rls.sql`
+
+### 4. 可选：部署管理员 Edge Function
+
+```bash
+npx supabase functions deploy leads-admin
+```
+
+然后在 Supabase 项目里配置：
+
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_LEADS_TABLE`
+- `ADMIN_BEARER_TOKEN`
+- `LEADS_ADMIN_ALLOWED_ORIGINS`
+
+## 当前修改文件
+
+- `src/lib/leads/client.ts`
+- `src/lib/leads/public-env.ts`
+- `src/lib/leads/admin-client.ts`
+- `src/components/AdminRecordsPanel.tsx`
+- `src/app/admin/page.tsx`
+- `src/app/health/page.tsx`
+- `next.config.ts`
+- `package.json`
+- `.env.example`
+- `supabase/migrations/20260419_public_lead_insert_rls.sql`
+- `supabase/functions/leads-admin/index.ts`
+- `scripts/deploy-manager-vm.sh`
+
+## 验证建议
+
+- 静态页面：`/`、`/quote`、`/contact`、`/admin`、`/health`
+- 报价页提交后，Supabase `leads` 表新增一条 `source=quote`
+- 联系页提交后，Supabase `leads` 表新增一条 `source=contact`
+- 未配置 `NEXT_PUBLIC_LEADS_ADMIN_URL` 时，`/admin` 显示“未启用管理员接口”
+- 部署 Edge Function 后，`/admin` 可以读取、更新、导出 CSV
