@@ -10,11 +10,38 @@ VM_NAME="${VM_NAME:-manager-vm}"
 DOMAIN="${DOMAIN:-manager.pakagent.dpdns.org}"
 VM_TUNNEL_ID="${VM_TUNNEL_ID:-3bfe311d-2ecd-44d3-be4b-1ee363981f17}"
 ENV_FILE="${ENV_FILE:-/home/pak/.config/melbourne-manager/manager-site.env}"
-APP_REPO="${APP_REPO:-https://github.com/PakYatHui/playground.git}"
 APP_REF="${APP_REF:-$(git -C "$ROOT_DIR" rev-parse HEAD)}"
 APP_DIR="${APP_DIR:-/opt/manager-site/app}"
 SERVICE_NAME="${SERVICE_NAME:-manager-site.service}"
 TUNNEL_SERVICE_NAME="${TUNNEL_SERVICE_NAME:-cloudflared-manager.service}"
+
+resolve_app_repo() {
+  if [[ -n "${APP_REPO:-}" ]]; then
+    printf '%s\n' "$APP_REPO"
+    return
+  fi
+
+  local origin_url
+  origin_url="$(git -C "$ROOT_DIR" remote get-url origin 2>/dev/null || true)"
+
+  if [[ -z "$origin_url" ]]; then
+    echo "Unable to resolve origin remote. Set APP_REPO explicitly." >&2
+    exit 1
+  fi
+
+  case "$origin_url" in
+    git@github.com:*)
+      origin_url="https://github.com/${origin_url#git@github.com:}"
+      ;;
+    ssh://git@github.com/*)
+      origin_url="https://github.com/${origin_url#ssh://git@github.com/}"
+      ;;
+  esac
+
+  printf '%s\n' "$origin_url"
+}
+
+APP_REPO="$(resolve_app_repo)"
 
 if [[ ! -x "$AZ_BIN" ]]; then
   echo "Azure CLI not found at $AZ_BIN" >&2
@@ -39,7 +66,17 @@ set -eu
 export DEBIAN_FRONTEND=noninteractive
 
 apt-get update
-apt-get install -y git curl ca-certificates nodejs npm
+apt-get install -y git curl ca-certificates gnupg
+
+if ! command -v node >/dev/null 2>&1 || ! node -e 'process.exit(Number(process.versions.node.split(".")[0]) >= 22 ? 0 : 1)'; then
+  install -d -m 0755 /etc/apt/keyrings
+  curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
+    | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+  echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" \
+    > /etc/apt/sources.list.d/nodesource.list
+  apt-get update
+  apt-get install -y nodejs
+fi
 
 install -d -m 0755 /opt/manager-site
 
@@ -57,6 +94,7 @@ chmod 600 /etc/manager-site.env
 cd "__APP_DIR__"
 npm ci
 npm run build
+chown -R azureuser:azureuser /opt/manager-site
 
 cat > /etc/systemd/system/__SERVICE_NAME__ <<'SERVICE'
 [Unit]
