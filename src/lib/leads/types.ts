@@ -30,6 +30,8 @@ export type LeadQuoteSnapshot = {
   summary: string;
 };
 
+export type LeadSource = "contact" | "quote";
+
 export type LeadRecord = {
   id: string;
   created_at: string;
@@ -48,4 +50,44 @@ export type LeadRecord = {
 export type LeadInsert = Omit<LeadRecord, "created_at" | "id"> & {
   id?: string;
   created_at?: string;
+};
+
+export type ContactLeadInput = {
+  name: string;
+  contact: string;
+  preferredService: string;
+  targetDate: string;
+  notes: string;
+};
+
+export type PublicLeadCreateRequest =
+  | {
+      source: "quote";
+      form: Record<string, unknown>;
+    }
+  | {
+      source: "contact";
+      contact: Record<string, unknown>;
+    };
+
+export type PublicLeadCreateResponse = {
+  lead_id: string;
+};
+
+export type LeadListFilters = {
+  page: number;
+  pageSize: number;
+  status: LeadStatus | "all";
+};
+
+export type LeadListResult = {
+  items: LeadRecord[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+export type LeadAdminPatch = {
+  internal_notes?: string;
+  status?: LeadStatus;
 };

@@ -7,7 +7,7 @@
 - 首页用于展示服务定位、边界和联系入口
 - `/quote` 提供 3 步询价表单、规则驱动报价、结果卡片和可复制摘要
 - `/contact` 提供独立留资入口
-- `/admin` 只保留本地脱敏记录查看，不承担真实后台能力
+- `/admin` 提供 Bearer token 保护的最小 leads 查询、状态更新和 CSV 导出
 
 本仓库明确不做支付、真实鉴权、CRM、派单或完整运营后台。段三第一部分只冻结最小存储路线与 leads 数据模型，尚未把真实写库流程接入页面。
 
@@ -98,9 +98,10 @@ cp .env.example .env.local
 - `NEXT_PUBLIC_SITE_URL`：本地或部署地址，用于 metadata 和站点链接
 - `CONTACT_EMAIL`：联系邮箱
 - `PORT`：本地运行端口
-- `SUPABASE_URL`：Supabase 项目地址，供后续服务端 leads 写入使用
+- `SUPABASE_URL`：Supabase 项目地址，供服务端 leads API 访问使用
 - `SUPABASE_SERVICE_ROLE_KEY`：Supabase 服务端密钥，只能放在服务端环境变量
 - `SUPABASE_LEADS_TABLE`：leads 表名，默认 `leads`
+- `ADMIN_BEARER_TOKEN`：管理 API Bearer token，只能放在服务端环境变量
 
 ## 当前实现重点
 
@@ -115,4 +116,5 @@ cp .env.example .env.local
 - 段一：已完成最小展示、询价、留资和本地记录闭环
 - 段二：已完成分步询价、配置驱动规则引擎、可解释校验、结果卡片、复制摘要、安全头、测试与 CI
 - 段三第一部分：已冻结边界、选定 `Supabase / Postgres + Next route handler` 路线，并建立最小 `leads` 数据模型
-- 段三其余部分：尚未开始，本仓库当前不应被描述为完整后台产品
+- 段三第二部分：已接入最小后端 API，包括公开写入、Bearer token 管理查询/更新、CSV 导出和 health check
+- 段三后续部分：尚未开始，本仓库当前不应被描述为完整后台产品

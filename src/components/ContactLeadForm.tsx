@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useState } from "react";
 
+import { createLead } from "@/src/lib/leads/client";
+
 import { PublicContactPanel } from "./PublicContactPanel";
-import { saveContactLead } from "./quote-storage";
 
 const DEFAULT_FORM = {
   name: "",
@@ -16,7 +17,12 @@ const DEFAULT_FORM = {
 
 export function ContactLeadForm() {
   const [form, setForm] = useState(DEFAULT_FORM);
-  const [submittedAt, setSubmittedAt] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState<null | {
+    leadId: string;
+    submittedAt: string;
+  }>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   function updateField<Key extends keyof typeof DEFAULT_FORM>(
     key: Key,
@@ -26,24 +32,43 @@ export function ContactLeadForm() {
       ...current,
       [key]: value,
     }));
+    setSubmitted(null);
+    setSubmitError(null);
   }
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setSubmitError(null);
+    setIsSubmitting(true);
 
     const savedAt = new Date().toISOString();
-    saveContactLead({
-      id: crypto.randomUUID(),
-      submittedAt: savedAt,
-      name: form.name.trim(),
-      contact: form.contact.trim(),
-      preferredService: form.preferredService,
-      targetDate: form.targetDate || "待确认",
-      notes: form.notes.trim(),
-    });
 
-    setSubmittedAt(savedAt);
-    setForm(DEFAULT_FORM);
+    try {
+      const response = await createLead({
+        source: "contact",
+        contact: {
+          name: form.name.trim(),
+          contact: form.contact.trim(),
+          preferredService: form.preferredService,
+          targetDate: form.targetDate,
+          notes: form.notes.trim(),
+        },
+      });
+
+      setSubmitted({
+        leadId: response.lead_id,
+        submittedAt: savedAt,
+      });
+      setForm(DEFAULT_FORM);
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : "提交失败，请稍后再试或直接加微信联系。",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -63,8 +88,8 @@ export function ContactLeadForm() {
             提交后会给出明确反馈，并继续引导你通过微信沟通路线、时间、人数和行李信息。
           </p>
           <p>
-            3.
-            当前页面记录仅保存在本浏览器，作为前台收集与本地查看的轻量版本，不替代正式后台系统。
+            3. 提交后会进入后台 lead
+            记录，前台只显示成功反馈，不暴露内部处理信息。
           </p>
         </div>
         <PublicContactPanel className="mt-8" />
@@ -147,21 +172,30 @@ export function ContactLeadForm() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <button
             type="submit"
+            disabled={isSubmitting}
             className="inline-flex items-center justify-center rounded-full bg-ink px-5 py-3 text-sm font-medium text-white transition hover:opacity-90"
           >
-            提交联系信息
+            {isSubmitting ? "提交中..." : "提交联系信息"}
           </button>
           <p className="m-0 text-sm text-slate-500">
-            提交后会显示成功反馈，并写入本地脱敏记录列表。
+            提交后会显示成功反馈，并进入后台待跟进列表。
           </p>
         </div>
 
-        {submittedAt ? (
+        {submitError ? (
+          <div className="rounded-[1.5rem] border border-rose-200 bg-rose-50 p-5 text-sm leading-7 text-rose-800">
+            <p className="m-0 font-medium">提交失败</p>
+            <p className="mb-0 mt-2">{submitError}</p>
+          </div>
+        ) : null}
+
+        {submitted ? (
           <div className="rounded-[1.5rem] border border-emerald-200 bg-emerald-50 p-5 text-sm leading-7 text-emerald-900">
             <p className="m-0 font-medium">已收到联系信息。</p>
             <p className="mb-0 mt-2">
-              提交时间：{new Date(submittedAt).toLocaleString("zh-CN")}。
+              提交时间：{new Date(submitted.submittedAt).toLocaleString("zh-CN")}。
             </p>
+            <p className="mb-0 mt-2">记录编号：{submitted.leadId}。</p>
             <p className="mb-0 mt-2">
               建议下一步直接添加微信沟通，并补充人数和行李信息，以便继续人工确认。
             </p>

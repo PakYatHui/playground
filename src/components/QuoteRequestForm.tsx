@@ -21,8 +21,7 @@ import {
   buildQuoteResultCard,
   getQuoteRangeLabel,
 } from "@/src/lib/quote-presenter";
-
-import { saveQuoteRequest } from "./quote-storage";
+import { createLead } from "@/src/lib/leads/client";
 
 const STEP_FIELDS: Record<number, QuoteFieldName[]> = {
   0: ["serviceOption"],
@@ -97,9 +96,12 @@ export function QuoteRequestForm() {
   const [currentStep, setCurrentStep] = useState(0);
   const [showErrors, setShowErrors] = useState(false);
   const [submitted, setSubmitted] = useState<null | {
+    leadId: string;
     label: string;
     savedAt: string;
   }>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState<"idle" | "copied" | "failed">(
     "idle",
   );
@@ -134,6 +136,7 @@ export function QuoteRequestForm() {
     value: QuoteFormInput[Key],
   ) {
       setSubmitted(null);
+      setSubmitError(null);
       setCopyFeedback("idle");
       setForm((current) => {
         const next = {
@@ -177,9 +180,10 @@ export function QuoteRequestForm() {
     setCurrentStep((step) => Math.max(step - 1, 0));
   }
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setShowErrors(true);
+    setSubmitError(null);
 
     if (!validation.is_valid) {
       const invalidFields = validation.field_errors.map((issue) => issue.field);
@@ -196,29 +200,31 @@ export function QuoteRequestForm() {
       return;
     }
 
+    setIsSubmitting(true);
+
     const savedAt = new Date().toISOString();
-    const serviceLabel = getServiceProfile(form.serviceOption).label;
     const estimateLabel = getQuoteRangeLabel(engineResult);
 
-    saveQuoteRequest({
-      id: crypto.randomUUID(),
-      submittedAt: savedAt,
-      customerName: form.customerName,
-      contactMethod: form.contactMethod,
-      serviceOption: serviceLabel,
-      tripIntent: serviceLabel,
-      ruleVersion: engineResult.rule_version,
-      productId: engineResult.product_id,
-      serviceDate: form.serviceDate,
-      startTime: form.startTime,
-      estimatedRangeLabel: estimateLabel,
-      summary: form.taskSummary,
-    });
+    try {
+      const response = await createLead({
+        source: "quote",
+        form,
+      });
 
-    setSubmitted({
-      label: estimateLabel,
-      savedAt,
-    });
+      setSubmitted({
+        leadId: response.lead_id,
+        label: estimateLabel,
+        savedAt,
+      });
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : "提交失败，请稍后再试或直接加微信联系。",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   async function copySummary() {
@@ -607,7 +613,7 @@ export function QuoteRequestForm() {
             </label>
 
             <div className="sm:col-span-2 rounded-[1.5rem] border border-slate-200 bg-[#faf7f2] px-4 py-4 text-sm leading-7 text-slate-600">
-              提交后页面只保留脱敏记录，不会在这个阶段暴露完整内部 debug 信息给客户。
+              提交后会进入后台 lead 记录，不会在前台暴露内部 debug 信息给客户。
             </div>
           </div>
         ) : null}
@@ -634,9 +640,10 @@ export function QuoteRequestForm() {
             ) : (
               <button
                 type="submit"
+                disabled={isSubmitting}
                 className="inline-flex items-center justify-center rounded-full bg-ink px-5 py-3 text-sm font-medium text-white transition hover:opacity-90"
               >
-                提交并生成预估
+                {isSubmitting ? "提交中..." : "提交并生成预估"}
               </button>
             )}
           </div>
@@ -649,11 +656,22 @@ export function QuoteRequestForm() {
           </Link>
         </div>
 
+        {submitError ? (
+          <div className="rounded-[1.5rem] border border-rose-200 bg-rose-50 px-4 py-4 text-sm leading-7 text-rose-700">
+            <p className="m-0 font-medium">提交失败</p>
+            <p className="mb-0 mt-2">{submitError}</p>
+          </div>
+        ) : null}
+
         {submitted ? (
           <div className="rounded-[1.5rem] border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm leading-7 text-emerald-800">
-            <p className="m-0 font-medium">已提交本地脱敏记录</p>
+            <p className="m-0 font-medium">已收到询价信息</p>
             <p className="mb-0 mt-2">当前预估区间：{submitted.label}</p>
             <p className="mb-0 mt-2">提交时间：{submitted.savedAt}</p>
+            <p className="mb-0 mt-2">记录编号：{submitted.leadId}</p>
+            <p className="mb-0 mt-2">
+              后台已可查看这条记录，建议继续通过微信补充路线和时间细节。
+            </p>
           </div>
         ) : null}
       </form>
