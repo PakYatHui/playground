@@ -31,6 +31,13 @@ npm run build
 npm run start
 ```
 
+## 当前常在线部署
+
+- 段三补充收口默认复用现有 Azure VM `manager-vm`
+- VM 上运行整套 Next.js 站点，用于保证 `/quote`、`/contact` 和 `POST /api/leads` 在本机关机后仍可用
+- `/admin` 仍保留在同一站点里，但这次不作为长期在线目标扩展范围
+- 复用脚本：`scripts/deploy-manager-vm.sh`
+
 ## 质量门禁
 
 - ESLint：`npm run lint`
