@@ -2,7 +2,7 @@
 
 ## Product Direction
 
-- This repository currently serves a public-facing marketing website prototype.
+- This repository currently serves a public-facing quote frontend for a lightweight Melbourne arrival assistance service.
 - The current product theme is `Melbourne arrival assistance / local companion service`.
 - Primary audiences:
   - Chinese international students newly arriving in Melbourne
@@ -24,5 +24,5 @@
 
 ## Handoff Notes
 
-- If later work needs real pricing, contact methods, or legal copy, update README placeholder sections first
+- Keep repository descriptions aligned with the current stage-2 public quote flow, not old `/ops` or internal-workbench narratives
 - Preserve a clean separation between content data, components, and business logic

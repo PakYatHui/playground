@@ -1,8 +1,15 @@
-# Melbourne Quote Kit
+# Pak in Melb Quote Frontend
 
-这是一个面向单人维护的 `Next.js + TypeScript + App Router` 项目脚手架。
+这是一个面向单人维护的轻量前台报价平台，基于 `Next.js + TypeScript + App Router`。
 
-当前阶段只完成前端工程初始化、基础页面占位、规则配置目录、quote engine 测试入口和统一导航结构，不包含数据库、登录、支付或复杂业务流程。
+当前仓库状态不是脚手架，也不是完整后台系统，而是已经完成段二的公开前台报价器：
+
+- 首页用于展示服务定位、边界和联系入口
+- `/quote` 提供 3 步询价表单、规则驱动报价、结果卡片和可复制摘要
+- `/contact` 提供独立留资入口
+- `/admin` 只保留本地脱敏记录查看，不承担真实后台能力
+
+本仓库明确不做数据库、真实鉴权、支付、CRM、派单或完整运营后台。
 
 ## 本地启动
 
@@ -24,11 +31,12 @@ npm run build
 npm run start
 ```
 
-## 开发规范
+## 质量门禁
 
 - ESLint：`npm run lint`
 - Prettier：`npm run format`
 - 测试入口：`npm run test`
+- 一键检查：`npm run check`
 
 ## 目录结构
 
@@ -52,7 +60,6 @@ repo/
 │   │   ├── pricing.ts
 │   │   └── quote-rules.ts
 │   └── lib/
-│       ├── calculateEstimate.ts
 │       └── quote-engine/
 │           ├── index.ts
 │           └── types.ts
@@ -75,7 +82,7 @@ repo/
 - `/privacy`
 - `/terms`
 
-所有页面都通过统一头部导航和底部链接互相可达。
+所有页面都通过统一头部导航和底部链接互相可达；仓库中不再保留 `/ops`、`/dashboard` 一类旧后台页面。
 
 ## 环境变量说明
 
@@ -87,13 +94,21 @@ cp .env.example .env.local
 
 变量说明：
 
-- `NEXT_PUBLIC_SITE_NAME`：站点名称，占位文案和后续品牌展示可复用
-- `NEXT_PUBLIC_SITE_URL`：本地或部署地址，用于后续 metadata / 轻后端回调配置
-- `CONTACT_EMAIL`：联系邮箱占位
+- `NEXT_PUBLIC_SITE_NAME`：站点名称
+- `NEXT_PUBLIC_SITE_URL`：本地或部署地址，用于 metadata 和站点链接
+- `CONTACT_EMAIL`：联系邮箱
 - `PORT`：本地运行端口
 
-## 后续扩展建议
+## 当前实现重点
 
-- 报价规则继续放在 `src/config`
-- 报价计算与判定逻辑继续收敛到 `src/lib/quote-engine`
-- 若后续接轻后端，可在 `src/app/api` 或独立服务中扩展，而不破坏当前页面层
+- 规则配置集中在 `src/config/quote-rules.ts`
+- 报价计算、校验和公开解释集中在 `src/lib/quote-engine`
+- 报价结果卡片与复制摘要逻辑集中在 `src/lib/quote-presenter.ts`
+- 前端最小安全基线在 `next.config.ts` 和 [docs/Security-Baseline.md](docs/Security-Baseline.md)
+- CI 只围绕当前前端报价主线执行 `npm ci`、`npm run lint`、`npm test`、`npm run build`
+
+## 阶段状态
+
+- 段一：已完成最小展示、询价、留资和本地记录闭环
+- 段二：已完成分步询价、配置驱动规则引擎、可解释校验、结果卡片、复制摘要、安全头、测试与 CI
+- 段三：尚未开始，本仓库当前不应被描述为完整后台产品

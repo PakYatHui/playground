@@ -902,7 +902,6 @@ export function runQuoteEngine(input: QuoteFormInput): QuoteEngineOutput {
       normalized_inputs: normalized,
       validation,
       eligibility: createBlockedEligibility(validation),
-      debug: null,
     };
   }
 
@@ -924,7 +923,6 @@ export function runQuoteEngine(input: QuoteFormInput): QuoteEngineOutput {
     normalized_inputs: normalized,
     validation,
     eligibility: buildEligibility(pricing),
-    debug: pricing,
   };
 }
 

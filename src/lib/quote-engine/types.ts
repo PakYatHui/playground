@@ -144,7 +144,6 @@ export type QuoteEngineOutput = {
   normalized_inputs: QuoteNormalizedInput;
   validation: QuoteValidationResult;
   eligibility: QuoteEligibility;
-  debug: QuotePricingDebug | null;
 };
 
 export type LegacyOrderInput = {
