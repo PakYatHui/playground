@@ -113,6 +113,14 @@ chown -R azureuser:azureuser "$RELEASE_DIR"
 systemctl restart "$SERVICE_NAME"
 systemctl is-active "$SERVICE_NAME"
 systemctl is-active "$TUNNEL_SERVICE_NAME"
+
+for attempt in $(seq 1 15); do
+  if curl -fsSL --max-time 15 http://127.0.0.1:3000/health/ >/dev/null; then
+    exit 0
+  fi
+  sleep 1
+done
+
 curl -fsSL --max-time 15 http://127.0.0.1:3000/health/ >/dev/null
 EOF
 
