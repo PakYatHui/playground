@@ -55,7 +55,7 @@ REMOTE_ARTIFACT_B64_PATH="/tmp/manager-site-static-${APP_REF}.tar.gz.b64"
 echo "Uploading static artifact to $VM_NAME in base64 chunks"
 run_remote_script "set -eu; rm -f '$REMOTE_ARTIFACT_B64_PATH' /tmp/manager-site-static.tar.gz" >/tmp/manager-vm-static-upload-init.json
 
-while IFS= read -r chunk; do
+while IFS= read -r chunk || [[ -n "$chunk" ]]; do
   read -r -d '' UPLOAD_SCRIPT <<EOF || true
 set -eu
 cat >> '$REMOTE_ARTIFACT_B64_PATH' <<'CHUNK_EOF'
