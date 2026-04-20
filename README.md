@@ -14,7 +14,7 @@
 
 - Next.js 使用 `output: "export"` 导出静态站点到 `out/`
 - VM 只负责托管静态文件
-- 公开表单直接用 Supabase anon key 写入 `public.leads`
+- 公开表单直接用 Supabase publishable key（兼容旧 anon key）写入 `public.leads`
 - service-role key 只保留给可选的 `supabase/functions/leads-admin`
 
 ## 本地开发
@@ -55,7 +55,8 @@ cp .env.example .env.local
 - `NEXT_PUBLIC_SITE_NAME`
 - `NEXT_PUBLIC_SITE_URL`
 - `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`（旧配置兼容，可二选一，优先前者）
 - `NEXT_PUBLIC_SUPABASE_LEADS_TABLE`
 - `NEXT_PUBLIC_LEADS_ADMIN_URL`
 

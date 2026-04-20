@@ -8,7 +8,7 @@
 - `/`、`/quote`、`/contact`、`/admin`、`/health` 全部由 Next.js 静态导出到 `out/`
 - VM 继续只做静态文件托管，不新增常驻 Node 服务
 - 公开表单直接从浏览器调用 Supabase REST API，把 lead 写入 `public.leads`
-- 前端只使用 `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- 前端优先使用 `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`，并兼容旧的 `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY` 只留给可选的 `supabase/functions/leads-admin`
 - `/admin` 页面本身仍是静态页；要启用真实查询/更新/CSV 导出时，再部署 Edge Function
 
@@ -36,7 +36,8 @@
 - `NEXT_PUBLIC_SITE_NAME`
 - `NEXT_PUBLIC_SITE_URL`
 - `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`（旧配置兼容，可保留）
 - `NEXT_PUBLIC_SUPABASE_LEADS_TABLE=leads`
 - `NEXT_PUBLIC_LEADS_ADMIN_URL`
 

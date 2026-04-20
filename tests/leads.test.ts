@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { buildContactLeadInsert, buildQuoteLeadInsert, serializeLeadsToCsv } from "../src/lib/leads/mappers";
+import { getPublicSupabaseConfig } from "../src/lib/leads/public-env";
 import { parseContactLeadInput, parseLeadPatch, parseLeadListFilters, parseQuoteForm } from "../src/lib/leads/validation";
 
 describe("lead request validation", () => {
@@ -96,5 +97,51 @@ describe("lead request validation", () => {
 
     expect(csv.startsWith("\uFEFFid,created_at")).toBe(true);
     expect(csv).toContain("\"包含\"\"备注\"\"\"");
+  });
+});
+
+describe("public supabase env", () => {
+  it("prefers NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY when present", () => {
+    const originalEnv = {
+      NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+      NEXT_PUBLIC_SUPABASE_LEADS_TABLE: process.env.NEXT_PUBLIC_SUPABASE_LEADS_TABLE,
+    };
+
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://example.supabase.co///";
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "legacy-anon-key";
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = "publishable-key";
+    process.env.NEXT_PUBLIC_SUPABASE_LEADS_TABLE = "custom_leads";
+
+    expect(getPublicSupabaseConfig()).toEqual({
+      leadsTable: "custom_leads",
+      supabaseAnonKey: "publishable-key",
+      supabaseUrl: "https://example.supabase.co",
+    });
+
+    Object.assign(process.env, originalEnv);
+  });
+
+  it("falls back to NEXT_PUBLIC_SUPABASE_ANON_KEY for older setups", () => {
+    const originalEnv = {
+      NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+      NEXT_PUBLIC_SUPABASE_LEADS_TABLE: process.env.NEXT_PUBLIC_SUPABASE_LEADS_TABLE,
+    };
+
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://example.supabase.co";
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "legacy-anon-key";
+    delete process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+    delete process.env.NEXT_PUBLIC_SUPABASE_LEADS_TABLE;
+
+    expect(getPublicSupabaseConfig()).toEqual({
+      leadsTable: "leads",
+      supabaseAnonKey: "legacy-anon-key",
+      supabaseUrl: "https://example.supabase.co",
+    });
+
+    Object.assign(process.env, originalEnv);
   });
 });
