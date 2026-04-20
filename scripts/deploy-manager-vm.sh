@@ -84,18 +84,18 @@ rm -f "$ARTIFACT_B64_PATH"
 tar -xzf /tmp/manager-site-static.tar.gz -C "$RELEASE_DIR"
 
 test -f "$RELEASE_DIR/index.html"
-test -f "$RELEASE_DIR/quote.html"
-test -f "$RELEASE_DIR/contact.html"
-test -f "$RELEASE_DIR/admin.html"
-test -f "$RELEASE_DIR/health.html"
+test -f "$RELEASE_DIR/quote/index.html"
+test -f "$RELEASE_DIR/contact/index.html"
+test -f "$RELEASE_DIR/admin/index.html"
+test -f "$RELEASE_DIR/health/index.html"
 
 python3 -m http.server "$PREVIEW_PORT" -d "$RELEASE_DIR" >/tmp/manager-site-preview.log 2>&1 &
 PREVIEW_PID="$!"
 trap 'kill "$PREVIEW_PID" 2>/dev/null || true' EXIT
 sleep 2
-curl -fsS "http://127.0.0.1:${PREVIEW_PORT}/quote" >/dev/null
-curl -fsS "http://127.0.0.1:${PREVIEW_PORT}/contact" >/dev/null
-curl -fsS "http://127.0.0.1:${PREVIEW_PORT}/health" >/dev/null
+curl -fsSL "http://127.0.0.1:${PREVIEW_PORT}/quote/" >/dev/null
+curl -fsSL "http://127.0.0.1:${PREVIEW_PORT}/contact/" >/dev/null
+curl -fsSL "http://127.0.0.1:${PREVIEW_PORT}/health/" >/dev/null
 kill "$PREVIEW_PID" 2>/dev/null || true
 wait "$PREVIEW_PID" 2>/dev/null || true
 trap - EXIT
@@ -111,7 +111,7 @@ chown -R azureuser:azureuser "$RELEASE_DIR"
 systemctl restart "$SERVICE_NAME"
 systemctl is-active "$SERVICE_NAME"
 systemctl is-active "$TUNNEL_SERVICE_NAME"
-curl -fsS --max-time 15 http://127.0.0.1:3000/health >/dev/null
+curl -fsSL --max-time 15 http://127.0.0.1:3000/health/ >/dev/null
 EOF
 
 REMOTE_SCRIPT="${REMOTE_SCRIPT//__APP_REF__/$APP_REF}"

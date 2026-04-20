@@ -13,6 +13,7 @@
 ## 当前部署模型
 
 - Next.js 使用 `output: "export"` 导出静态站点到 `out/`
+- 同时开启 `trailingSlash: true`，保证普通静态文件服务器也能稳定访问 `/quote`、`/contact`、`/admin`、`/health`
 - VM 只负责托管静态文件
 - 公开表单直接用 Supabase publishable key（兼容旧 anon key）写入 `public.leads`
 - service-role key 只保留给可选的 `supabase/functions/leads-admin`

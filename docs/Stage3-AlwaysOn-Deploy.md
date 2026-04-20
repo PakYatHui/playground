@@ -6,6 +6,7 @@
 ## 最小架构
 
 - `/`、`/quote`、`/contact`、`/admin`、`/health` 全部由 Next.js 静态导出到 `out/`
+- 开启 `trailingSlash: true`，避免在普通静态服务器上访问无扩展名路由时出现 404
 - VM 继续只做静态文件托管，不新增常驻 Node 服务
 - 公开表单直接从浏览器调用 Supabase REST API，把 lead 写入 `public.leads`
 - 前端优先使用 `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`，并兼容旧的 `NEXT_PUBLIC_SUPABASE_ANON_KEY`
