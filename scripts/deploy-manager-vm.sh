@@ -13,8 +13,10 @@ SERVICE_NAME="${SERVICE_NAME:-manager-site.service}"
 TUNNEL_SERVICE_NAME="${TUNNEL_SERVICE_NAME:-cloudflared-manager.service}"
 APP_REF="${APP_REF:-$(git -C "$ROOT_DIR" rev-parse --short HEAD)}"
 ARTIFACT_PATH="${ARTIFACT_PATH:-/tmp/manager-site-static-${APP_REF}.tar.gz}"
+ARTIFACT_B64_PATH="${ARTIFACT_B64_PATH:-/tmp/manager-site-static-${APP_REF}.tar.gz.b64}"
 PREVIEW_PORT="${PREVIEW_PORT:-38123}"
 ROUTE_DOMAIN_TO_VM="${ROUTE_DOMAIN_TO_VM:-0}"
+UPLOAD_CHUNK_SIZE="${UPLOAD_CHUNK_SIZE:-120000}"
 
 cd "$ROOT_DIR"
 
@@ -23,12 +25,44 @@ if [[ ! -x "$AZ_BIN" ]]; then
   exit 1
 fi
 
+if ! "$AZ_BIN" account show -o none >/dev/null 2>&1; then
+  echo "Azure CLI is not logged in. Run 'az login' before deploying." >&2
+  exit 1
+fi
+
 echo "Building static site locally for ref $APP_REF"
 npm ci
 npm run build
 
 tar -C "$ROOT_DIR/out" -czf "$ARTIFACT_PATH" .
-ARTIFACT_B64="$(base64 -w0 "$ARTIFACT_PATH")"
+base64 -w0 "$ARTIFACT_PATH" >"$ARTIFACT_B64_PATH"
+
+run_remote_script() {
+  local script="$1"
+
+  "$AZ_BIN" vm run-command invoke \
+    -g "$RESOURCE_GROUP" \
+    -n "$VM_NAME" \
+    --command-id RunShellScript \
+    --scripts "$script" \
+    -o json
+}
+
+REMOTE_ARTIFACT_B64_PATH="/tmp/manager-site-static-${APP_REF}.tar.gz.b64"
+
+echo "Uploading static artifact to $VM_NAME in base64 chunks"
+run_remote_script "set -eu; rm -f '$REMOTE_ARTIFACT_B64_PATH' /tmp/manager-site-static.tar.gz" >/tmp/manager-vm-static-upload-init.json
+
+while IFS= read -r chunk; do
+  read -r -d '' UPLOAD_SCRIPT <<EOF || true
+set -eu
+cat >> '$REMOTE_ARTIFACT_B64_PATH' <<'CHUNK_EOF'
+$chunk
+CHUNK_EOF
+EOF
+
+  run_remote_script "$UPLOAD_SCRIPT" >/tmp/manager-vm-static-upload-chunk.json
+done < <(fold -w "$UPLOAD_CHUNK_SIZE" "$ARTIFACT_B64_PATH")
 
 read -r -d '' REMOTE_SCRIPT <<'EOF' || true
 set -eu
@@ -39,12 +73,14 @@ LIVE_DIR="/srv/manager-site"
 PREVIEW_PORT="__PREVIEW_PORT__"
 SERVICE_NAME="__SERVICE_NAME__"
 TUNNEL_SERVICE_NAME="__TUNNEL_SERVICE_NAME__"
+ARTIFACT_B64_PATH="__ARTIFACT_B64_PATH__"
 
 mkdir -p /srv/manager-site-releases /srv/manager-site-backups "$RELEASE_DIR"
 rm -rf "$RELEASE_DIR"
 mkdir -p "$RELEASE_DIR"
 
-printf '%s' '__ARTIFACT_B64__' | base64 -d > /tmp/manager-site-static.tar.gz
+base64 -d "$ARTIFACT_B64_PATH" > /tmp/manager-site-static.tar.gz
+rm -f "$ARTIFACT_B64_PATH"
 tar -xzf /tmp/manager-site-static.tar.gz -C "$RELEASE_DIR"
 
 test -f "$RELEASE_DIR/index.html"
@@ -82,16 +118,11 @@ REMOTE_SCRIPT="${REMOTE_SCRIPT//__APP_REF__/$APP_REF}"
 REMOTE_SCRIPT="${REMOTE_SCRIPT//__PREVIEW_PORT__/$PREVIEW_PORT}"
 REMOTE_SCRIPT="${REMOTE_SCRIPT//__SERVICE_NAME__/$SERVICE_NAME}"
 REMOTE_SCRIPT="${REMOTE_SCRIPT//__TUNNEL_SERVICE_NAME__/$TUNNEL_SERVICE_NAME}"
-REMOTE_SCRIPT="${REMOTE_SCRIPT//__ARTIFACT_B64__/$ARTIFACT_B64}"
+REMOTE_SCRIPT="${REMOTE_SCRIPT//__ARTIFACT_B64_PATH__/$REMOTE_ARTIFACT_B64_PATH}"
 
 export AZURE_CONFIG_DIR
 
-"$AZ_BIN" vm run-command invoke \
-  -g "$RESOURCE_GROUP" \
-  -n "$VM_NAME" \
-  --command-id RunShellScript \
-  --scripts "$REMOTE_SCRIPT" \
-  -o json >/tmp/manager-vm-static-deploy.json
+run_remote_script "$REMOTE_SCRIPT" >/tmp/manager-vm-static-deploy.json
 
 python3 - <<'PY'
 import json

@@ -93,7 +93,7 @@ out/
 
 - 本地执行 `npm ci` 和 `npm run build`
 - 打包 `out/` 为静态压缩包
-- 通过 Azure Run Command 把压缩包发送到 `manager-vm`
+- 通过 Azure Run Command 分块发送静态压缩包到 `manager-vm`
 - 在 VM 上先用短暂的 Python 静态预览验证 `/quote`、`/contact`、`/health`
 - 验证通过后把 `/srv/manager-site` 原子切到新的 release
 - 重启现有静态服务 `manager-site.service`
